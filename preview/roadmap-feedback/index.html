@@ -147,6 +147,47 @@ header > .side { position: relative; }
 .count b { font-size: 22px; font-variant-numeric: tabular-nums; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 /* the status dot sits by the number, so the whole card width is left for the label (longest: "Заблокировано") */
 .count span { font-size: 12px; color: var(--muted); white-space: nowrap; }
+/* overall progress doubles as the roadmap toggle */
+.summary > .panel { align-content: start; }
+.progress-toggle { cursor: pointer; text-align: left; transition: border-color .15s ease; }
+.progress-toggle:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--glass-edge)); }
+.progress-head { display: flex; justify-content: space-between; align-items: center; }
+.rm-chev { font-size: 12px; color: var(--accent); }
+.focus { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 10px; margin: 2px 0 0; font-size: 13px; line-height: 1.4; }
+.focus dt { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; padding-top: 2px; }
+.focus dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.focus .st-word { font-size: 12px; white-space: nowrap; }
+/* the roadmap: milestones in order, ending with the goal */
+.roadmap { display: grid; gap: 14px; }
+.rm-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; }
+.rm-track { list-style: none; margin: 0; padding: 0 0 6px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(160px, 1fr); gap: 14px; overflow-x: auto; }
+.rm-node { position: relative; display: grid; gap: 8px; align-content: start; padding-top: 34px; min-width: 0; }
+.rm-node::before { content: ""; position: absolute; top: 13px; left: 0; right: -14px; height: 2px; background: var(--line); }
+.rm-node:last-child::before { right: 50%; }
+.rm-node.rm-done::before { background: var(--done); }
+.rm-mark { position: absolute; top: 0; left: 0; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600;
+  background: var(--glass-strong); border: 2px solid var(--line); color: var(--muted); font-variant-numeric: tabular-nums; }
+.rm-done .rm-mark { background: var(--done); border-color: var(--done); color: var(--surface); }
+.rm-current .rm-mark { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
+.rm-goal .rm-mark { border-color: var(--accent); background: var(--accent); color: var(--surface); }
+.rm-card { display: grid; gap: 6px; text-align: left; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--sunken); color: inherit; font: inherit; cursor: pointer; min-width: 0; }
+button.rm-card:hover { border-color: var(--accent); }
+.rm-current .rm-card { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: color-mix(in srgb, var(--accent) 7%, var(--sunken)); }
+.rm-empty .rm-card { opacity: .75; }
+.rm-goal-card { cursor: default; border-style: dashed; border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.rm-state { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.rm-current .rm-state, .rm-goal .rm-state { color: var(--accent); }
+.rm-name { font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.rm-due, .rm-count { font-size: 12px; color: var(--muted); }
+.rm-due.late { color: var(--blocked); }
+.rm-desc { font-size: 13px; color: var(--muted); }
+.rm-active { display: grid; gap: 4px; }
+.rm-active ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rm-task { display: flex; gap: 6px; align-items: baseline; width: 100%; text-align: left; padding: 4px 6px; border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; font-size: 13px; cursor: pointer; line-height: 1.35; }
+.rm-task:hover { background: var(--sunken); }
+.rm-task .dot { flex: none; transform: translateY(-1px); }
+.rm-task .mono { font-size: 12px; color: var(--muted); flex: none; }
+.rm-goal-form { padding: 12px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
 
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; overflow-x: auto; }
@@ -223,6 +264,11 @@ tbody tr:last-child td { border-bottom: 0; }
   .summary { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
+  /* phones: the roadmap runs top to bottom */
+  .rm-track { grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; gap: 0; }
+  .rm-node { padding: 0 0 16px 40px; }
+  .rm-node::before { top: 28px; bottom: 0; left: 13px; right: auto; width: 2px; height: auto; }
+  .rm-node:last-child::before { display: none; }
   /* phones: statuses as a compact list, label on the left, dot and number on the right */
   .counts { grid-template-columns: 1fr; gap: 4px; }
   .count { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; padding: 7px 12px; }
@@ -272,7 +318,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "build": "2efc39b", "preview": "roadmap-feedback"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "build": "1fb2557", "preview": "roadmap-feedback"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -304,6 +350,12 @@ const store = {
 const I18N = {
   en: {
     "st.todo": "To do", "st.doing": "In progress", "st.review": "Review", "st.done": "Done", "st.blocked": "Blocked",
+    "v.goal": "The goal needs a title",
+    "now": "Now", "goal": "Goal", "noGoal": "Not set yet — open the roadmap to set it", "allDone": "Everything is done",
+    "rmOpen": "Show the roadmap", "rmClose": "Hide the roadmap", "rmTitle": "Roadmap", "rmLead": (d, n) => `${d} of ${n} milestones done`,
+    "rmFinal": "Final result", "rmNoGoal": "No goal yet", "rmSetGoal": "Set the goal", "rmEditGoal": "Edit", "rmActive": "Now in work", "rmNext": "Next up",
+    "rmNoTasks": "No tasks yet", "rmDone": "Done", "rmCurrent": "Current", "rmUpcoming": "Upcoming", "rmOpenChecklist": "Open in the checklist",
+    "rmGoalPh": "What the whole roadmap leads to", "rmGoalDescPh": "How you'll know it's reached",
     "tab.checklist": "Checklist", "tab.macros": "Macros", "tab.review": "Review queue", "tab.activity": "Activity", "tab.feedback": "Feedback", "fbMissing": "The feedback module (feedback.js) didn't load. Reload the page; if it repeats, rebuild with roadmap/build.py.",
     "owner.kaa": "Kaa", "owner.ai": "AI",
     "area.macros": "macros", "area.blog": "blog", "area.infra": "infra", "area.docs": "docs", "area.research": "research",
@@ -358,6 +410,12 @@ const I18N = {
   },
   ru: {
     "st.todo": "Не начато", "st.doing": "В работе", "st.review": "На проверке", "st.done": "Готово", "st.blocked": "Заблокировано",
+    "v.goal": "У цели должно быть название",
+    "now": "Сейчас", "goal": "Цель", "noGoal": "Пока не задана — откройте роадмап, чтобы задать", "allDone": "Всё сделано",
+    "rmOpen": "Показать роадмап", "rmClose": "Скрыть роадмап", "rmTitle": "Роадмап", "rmLead": (d, n) => `завершено вех: ${d} из ${n}`,
+    "rmFinal": "Конечный результат", "rmNoGoal": "Цель пока не задана", "rmSetGoal": "Задать цель", "rmEditGoal": "Изменить", "rmActive": "В работе сейчас", "rmNext": "Дальше",
+    "rmNoTasks": "Задач пока нет", "rmDone": "Завершено", "rmCurrent": "Текущая веха", "rmUpcoming": "Впереди", "rmOpenChecklist": "Открыть в чек-листе",
+    "rmGoalPh": "К чему ведёт весь роадмап", "rmGoalDescPh": "Как понять, что цель достигнута",
     "tab.checklist": "Чек-лист", "tab.macros": "Макросы", "tab.review": "На ревью", "tab.activity": "Активность", "tab.feedback": "Баги и апдейты", "fbMissing": "Модуль обратной связи (feedback.js) не загрузился. Перезагрузите страницу; если повторится, пересоберите через roadmap/build.py.",
     "owner.kaa": "Каа", "owner.ai": "ИИ",
     "area.macros": "макросы", "area.blog": "блог", "area.infra": "инфраструктура", "area.docs": "документация", "area.research": "исследования",
@@ -433,7 +491,7 @@ function applyLangStatic() {
 const CFG_KEY = DEFAULTS.preview ? "cfg:preview" : "cfg";
 const cfg = Object.assign({}, DEFAULTS, store.get(CFG_KEY, {}), { token: store.get("token", null) || sessionToken() });
 function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); } catch { return null; } }
-const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false }, store.get("ui", {}));
+const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false, rm: false }, store.get("ui", {}));
 if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
 let doc = null, header = "", fileSha = null, tree = [], treeTruncated = false, commits = [], contents = {}, derived = {};
 let pending = [], saveTimer = null, savebarTimer = null, saving = false, lastSave = null, saveError = null, openEditor = null, loadError = null, loading = false;
@@ -503,6 +561,7 @@ function clean(obj) {
 }
 const TASK_ORDER = ["id", "title", "milestone", "area", "status", "owner", "priority", "created", "due", "done", "links", "notes", "done_when"];
 const MS_ORDER = ["id", "title", "due", "description"];
+const GOAL_ORDER = ["title", "due", "description"];
 function ordered(obj, order) {
   const o = {};
   order.forEach(k => { if (k in obj) o[k] = obj[k]; });
@@ -510,7 +569,9 @@ function ordered(obj, order) {
   return o;
 }
 function serialize(data) {
+  const goal = data.goal && typeof data.goal === "object" ? clean(data.goal) : null;
   const body = jsyaml.dump({
+    ...(goal && goal.title ? { goal: ordered(goal, GOAL_ORDER) } : {}),
     milestones: data.milestones.map(m => ordered(clean(m), MS_ORDER)),
     tasks: data.tasks.map(t => ordered(clean(t), TASK_ORDER))
   }, { ...YAML_OPTS, lineWidth: -1, noRefs: true, flowLevel: 3 });
@@ -518,6 +579,7 @@ function serialize(data) {
 }
 function validate(data) {
   const errs = [], ms = new Set(), ids = new Set();
+  if (data.goal && typeof data.goal === "object" && Object.keys(clean(data.goal)).length && !String(data.goal.title || "").trim()) errs.push(T("v.goal"));
   data.milestones.forEach(m => { if (!m.id || !m.title) errs.push(T("v.msNoId")); if (ms.has(m.id)) errs.push(T("v.dupMs", m.id)); ms.add(m.id); });
   data.tasks.forEach(t => {
     if (!/^T-\d{3,}$/.test(t.id || "")) errs.push(T("v.badId", t.id));
@@ -547,6 +609,9 @@ function applyOp(data, op) {
     if (m) Object.assign(m, op.fields);
   } else if (op.type === "add-ms") {
     if (!data.milestones.some(x => x.id === op.ms.id)) data.milestones.push(structuredClone(op.ms));
+  } else if (op.type === "goal") {
+    const g = clean(op.goal);
+    if (g.title) data.goal = g; else delete data.goal;
   }
 }
 function edit(op) {
@@ -568,6 +633,7 @@ function describe(ops) {
     else if (op.type === "delete-task") parts.push(`${op.id} deleted`);
     else if (op.type === "ms") parts.push(`${op.id} edited`);
     else if (op.type === "add-ms") parts.push(`${op.ms.id} added`);
+    else if (op.type === "goal") parts.push("goal edited");
   });
   return [...new Set(parts)].join(", ");
 }
@@ -732,6 +798,7 @@ function render() {
     ${loadError ? `<div class="error">${esc(loadError)}</div>` : ""}
     ${treeTruncated ? `<div class="note">${T("truncated")}</div>` : ""}
     ${renderSummary()}
+    ${ui.rm ? renderRoadmap() : ""}
     <section>
       <div class="tabs" role="tablist"${fbA("tabs")}>${TABS.map(t => `<button class="tab" role="tab" type="button" data-tab="${t.key}"${fbA(t.key, t.label)} aria-selected="${ui.tab === t.key}">${t.label}<small>${counts[t.key]}</small></button>`).join("")}</div>
       <div id="view"${fbA(ui.tab, tabLabel)}>${{ checklist: renderChecklist, macros: renderMacros, review: renderReview, activity: renderActivity,
@@ -804,14 +871,81 @@ function closePreviews() { if (!$("pv-pop").hidden) togglePreviews(); }
 document.addEventListener("click", e => { if (!$("pv-pop").hidden && !e.target.closest("#pv-pop, #pv-btn")) closePreviews(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("pv-pop").hidden) { closePreviews(); $("pv-btn")?.focus(); } });
 
+/* ---------- where we are and where we're going ---------- */
+const taskRank = t => ({ doing: 0, review: 1, blocked: 2, todo: 3 }[effStatus(t)] ?? 9);
+const priRank = t => ({ high: 0, normal: 1, low: 2 }[t.priority || "normal"] ?? 1);
+const byFocus = (a, b) => taskRank(a) - taskRank(b) || priRank(a) - priRank(b) || (a.due || "9999").localeCompare(b.due || "9999") || a.id.localeCompare(b.id, undefined, { numeric: true });
+function milestoneStats() {
+  return doc.milestones.map(m => {
+    const tasks = doc.tasks.filter(t => t.milestone === m.id), done = tasks.filter(t => effStatus(t) === "done").length;
+    return { m, tasks, done, pct: tasks.length ? Math.round(100 * done / tasks.length) : 0, finished: tasks.length > 0 && done === tasks.length };
+  });
+}
+function focusInfo() {
+  const stats = milestoneStats();
+  const cur = stats.find(x => x.tasks.length && !x.finished) || null;
+  const open = (cur ? cur.tasks : doc.tasks).filter(t => effStatus(t) !== "done").sort(byFocus);
+  return { stats, cur, task: open[0] || null, open };
+}
+function renderFocus() {
+  const f = focusInfo(), g = doc.goal && doc.goal.title ? doc.goal : null;
+  const now = f.cur ? `<b>${esc(f.cur.m.title)}</b>${f.task ? ` · <span class="mono">${esc(f.task.id)}</span> ${esc(f.task.title)} <span class="st-word" style="color:var(--${effStatus(f.task)})">${esc(STATUS.find(s => s.key === effStatus(f.task)).label)}</span>` : ""}`
+    : f.task ? `<span class="mono">${esc(f.task.id)}</span> ${esc(f.task.title)}` : esc(T("allDone"));
+  return `<dl class="focus">
+    <dt>${T("now")}</dt><dd>${now}</dd>
+    <dt>${T("goal")}</dt><dd>${g ? `<b>${esc(g.title)}</b>${g.due ? ` <span class="muted">· ${esc(T("due", fmtDate(g.due)))}</span>` : ""}` : `<span class="muted">${T("noGoal")}</span>`}</dd>
+  </dl>`;
+}
+function renderRoadmap() {
+  const f = focusInfo(), g = doc.goal && doc.goal.title ? doc.goal : null;
+  const curIdx = f.cur ? f.stats.indexOf(f.cur) : -1;
+  const finishedCount = f.stats.filter(x => x.finished).length;
+  const node = (x, i) => {
+    const state = x.finished ? "done" : x === f.cur ? "current" : !x.tasks.length ? "empty" : "next";
+    const late = x.m.due && !x.finished && x.m.due < today();
+    const active = state === "current" ? f.open.slice(0, 4) : [];
+    return `<li class="rm-node rm-${state}"${fbA("rm-" + x.m.id, x.m.title)}>
+      <span class="rm-mark" aria-hidden="true">${state === "done" ? "✓" : i + 1}</span>
+      <button class="rm-card" type="button" data-rm-ms="${esc(x.m.id)}" title="${T("rmOpenChecklist")}">
+        <span class="rm-state">${state === "done" ? T("rmDone") : state === "current" ? T("rmCurrent") : T("rmUpcoming")}</span>
+        <span class="rm-name">${esc(x.m.title)}</span>
+        ${x.m.due ? `<span class="rm-due ${late ? "late" : ""}">${esc(T("due", fmtDate(x.m.due)))}</span>` : ""}
+        ${x.tasks.length ? `<span class="bar"><i style="width:${x.pct}%;background:var(--${x.finished ? "done" : "accent"})"></i></span><span class="rm-count mono">${x.done}/${x.tasks.length} · ${x.pct}%</span>` : `<span class="rm-count muted">${T("rmNoTasks")}</span>`}
+      </button>
+      ${active.length ? `<div class="rm-active"><span class="label">${T("rmActive")}</span><ul>${active.map(t => `<li><button type="button" class="rm-task" data-rm-task="${esc(t.id)}"><span class="dot" style="background:var(--${effStatus(t)})"></span><span class="mono">${esc(t.id)}</span> ${esc(t.title)}</button></li>`).join("")}</ul></div>` : ""}
+    </li>`;
+  };
+  const goalCard = openEditor === "goal" ? `<form class="editor rm-goal-form" data-goal-form style="margin:0;grid-column:auto">
+      <label class="field"><span>${T("title")}</span><input type="text" name="title" value="${esc(g?.title || "")}" placeholder="${T("rmGoalPh")}"></label>
+      <label class="field"><span>${T("dueLabel")}</span><input type="date" name="due" value="${esc(g?.due || "")}"></label>
+      <label class="field"><span>${T("description")}</span><textarea name="description" rows="2" placeholder="${T("rmGoalDescPh")}">${esc(g?.description || "")}</textarea></label>
+      <div class="actions"><div style="display:flex;gap:8px"><button class="btn primary" type="submit">${T("save")}</button><button class="btn" type="button" data-cancel>${T("cancel")}</button></div></div>
+    </form>`
+    : `<div class="rm-card rm-goal-card">
+      <span class="rm-state">${T("rmFinal")}</span>
+      <span class="rm-name">${g ? esc(g.title) : `<span class="muted">${T("rmNoGoal")}</span>`}</span>
+      ${g?.due ? `<span class="rm-due">${esc(T("due", fmtDate(g.due)))}</span>` : ""}
+      ${g?.description ? `<span class="rm-desc">${esc(g.description)}</span>` : ""}
+      <button class="btn ghost" type="button" data-goal-edit style="justify-self:start;padding-inline:0">${g ? T("rmEditGoal") : T("rmSetGoal")}</button>
+    </div>`;
+  return `<section class="panel roadmap" id="roadmap" aria-label="${T("rmTitle")}"${fbA("roadmap")}>
+    <div class="rm-head"><h2>${T("rmTitle")}</h2><span class="muted">${esc(T("rmLead", finishedCount, f.stats.length))}</span></div>
+    <ol class="rm-track" style="--rm-cur:${curIdx}">
+      ${f.stats.map(node).join("")}
+      <li class="rm-node rm-goal"${fbA("goal")}><span class="rm-mark" aria-hidden="true">⚑</span>${goalCard}</li>
+    </ol>
+  </section>`;
+}
+
 function renderSummary() {
   const n = doc.tasks.length || 1;
   const by = Object.fromEntries(STATUS.map(s => [s.key, doc.tasks.filter(t => effStatus(t) === s.key).length]));
   return `<section class="summary" aria-label="${T("progress")}"${fbA("summary")}>
-    <div class="panel" style="display:grid;gap:10px"${fbA("progress")}>
-      <div class="label">${T("overall")}</div>
+    <div class="panel progress-toggle" id="rm-toggle" role="button" tabindex="0" aria-expanded="${!!ui.rm}" aria-controls="roadmap" title="${ui.rm ? T("rmClose") : T("rmOpen")}"${fbA("progress")}>
+      <div class="label progress-head">${T("overall")}<span class="rm-chev" aria-hidden="true">${ui.rm ? "▴" : "▾"}</span></div>
       <div><span class="big">${Math.round(100 * by.done / n)}%</span> <span class="muted">${T("ofDone", by.done, doc.tasks.length)}</span></div>
       <div class="bar">${STATUS.filter(s => by[s.key]).map(s => `<i style="width:${100 * by[s.key] / n}%;background:var(--${s.key})" title="${s.label}: ${by[s.key]}"></i>`).join("")}</div>
+      ${renderFocus()}
     </div>
     <div class="panel" style="display:grid;gap:10px"${fbA("status-cards")}>
       <div class="label">${T("byStatus")}</div>
@@ -1001,6 +1135,26 @@ const inFrame = (() => { try { return window.self !== window.top; } catch { retu
 function bind() {
   const root = $("main");
   root.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { ui.tab = b.dataset.tab; openEditor = null; render(); });
+  const tg = $("rm-toggle");
+  if (tg) {
+    const flip = () => { ui.rm = !ui.rm; if (!ui.rm && openEditor === "goal") openEditor = null; render(); $("rm-toggle")?.focus(); };
+    tg.onclick = flip;
+    tg.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } };
+  }
+  root.querySelectorAll("[data-rm-ms]").forEach(b => b.onclick = () => {
+    ui.tab = "checklist"; Object.assign(ui, { q: "", status: "", area: "", owner: "", hideDone: false }); render();
+    document.querySelector(`[data-fb="milestone-${CSS.escape(b.dataset.rmMs)}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+  });
+  root.querySelectorAll("[data-rm-task]").forEach(b => b.onclick = () => {
+    ui.tab = "checklist"; Object.assign(ui, { q: "", status: "", area: "", owner: "", hideDone: false }); openEditor = "task:" + b.dataset.rmTask; render();
+    document.querySelector(`[data-fb="task-${CSS.escape(b.dataset.rmTask)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+  root.querySelectorAll("[data-goal-edit]").forEach(b => b.onclick = () => { openEditor = "goal"; render(); root.querySelector('[data-goal-form] input[name="title"]')?.focus(); });
+  root.querySelectorAll("[data-goal-form]").forEach(f => onForm(f, () => {
+    const fd = new FormData(f);
+    edit({ type: "goal", goal: { title: fd.get("title").trim(), due: fd.get("due"), description: fd.get("description").trim() } });
+    openEditor = null; render();
+  }));
   root.querySelectorAll("[data-count]").forEach(b => b.onclick = () => { ui.status = ui.status === b.dataset.count ? "" : b.dataset.count; ui.tab = "checklist"; render(); });
   if (ui.tab === "checklist") {
     $("f-q").oninput = e => { ui.q = e.target.value; const pos = e.target.selectionStart; render(); $("f-q").focus(); $("f-q").setSelectionRange(pos, pos); };
