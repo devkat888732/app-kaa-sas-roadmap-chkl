@@ -27,7 +27,7 @@ const HEAD_DEFAULT = `# Bugs and updates of project ${PROJECT} — the master co
 
 /* ---------- texts ---------- */
 Object.assign(I18N.en, {
-  "fb.btn": "Report a bug or an update", "fb.bug": "Bug", "fb.bugHint": "Something works wrong", "fb.update": "Update", "fb.updateHint": "An improvement or a new idea",
+  "fb.btn": "Report a bug or an update", "fb.report": "Report", "fb.bug": "Bug", "fb.bugHint": "Something works wrong", "fb.update": "Update", "fb.updateHint": "An improvement or a new idea",
   "fb.draft": "Continue the draft", "fb.needToken": "Connect to GitHub to report.", "fb.openSettings": "Open settings",
   "fb.pickBug": "Click the part of the page the bug is about", "fb.pickUpdate": "Click the part of the page the update is about",
   "fb.inside": l => `inside “${l}”`, "fb.wholePage": "Whole page", "fb.cancel": "Cancel", "fb.levelUp": "Level up",
@@ -59,7 +59,7 @@ Object.assign(I18N.en, {
   "fba.fb-filters": "Feedback filters", "fba.fb-table": "Feedback table"
 });
 Object.assign(I18N.ru, {
-  "fb.btn": "Сообщить о баге или апдейте", "fb.bug": "Баг", "fb.bugHint": "Что-то работает не так", "fb.update": "Апдейт", "fb.updateHint": "Улучшение или новая идея",
+  "fb.btn": "Сообщить о баге или апдейте", "fb.report": "Сообщить", "fb.bug": "Баг", "fb.bugHint": "Что-то работает не так", "fb.update": "Апдейт", "fb.updateHint": "Улучшение или новая идея",
   "fb.draft": "Продолжить черновик", "fb.needToken": "Чтобы сообщить, подключитесь к GitHub.", "fb.openSettings": "Открыть настройки",
   "fb.pickBug": "Нажмите на часть страницы, к которой относится баг", "fb.pickUpdate": "Нажмите на часть страницы, к которой относится апдейт",
   "fb.inside": l => `внутри «${l}»`, "fb.wholePage": "Вся страница", "fb.cancel": "Отмена", "fb.levelUp": "Уровнем выше",
@@ -208,7 +208,12 @@ root.innerHTML = `
   <div class="fb-dock" id="fb-dock">
     <div class="fb-menu" id="fb-menu" role="menu" hidden></div>
     <button class="fb-btn" id="fb-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fb-menu">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M12 8v3.5"/><path d="M12 14v.01"/></svg>
+      <svg class="fb-reticle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+        <g class="ring"><path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5"/><path d="M19.5 12a7.5 7.5 0 0 1-7.5 7.5"/><path d="M12 19.5A7.5 7.5 0 0 1 4.5 12"/><path d="M4.5 12A7.5 7.5 0 0 1 9 5.1"/></g>
+        <g class="ticks"><path d="M12 1.5v3"/><path d="M12 19.5v3"/><path d="M1.5 12h3"/><path d="M19.5 12h3"/></g>
+        <circle class="dot-bug" cx="10.4" cy="10.4" r="1.9" stroke="none"/><circle class="dot-upd" cx="13.6" cy="13.6" r="1.9" stroke="none"/>
+      </svg>
+      <span class="fb-btn-label" id="fb-btn-label"></span>
     </button>
   </div>
   <div class="fb-overlay" id="fb-overlay" hidden></div>
@@ -226,7 +231,7 @@ const dock = q("fb-dock"), menu = q("fb-menu"), btn = q("fb-btn"), overlay = q("
   selHl = q("fb-sel"), flashHl = q("fb-flash"), bar = q("fb-bar"), panel = q("fb-panel"), modal = q("fb-modal"), toastEl = q("fb-toast");
 const canHover = () => matchMedia("(hover: hover)").matches;
 const typeDot = t => `<i class="fb-type-dot ${t}"></i>`;
-function labelBtn() { btn.setAttribute("aria-label", T("fb.btn")); btn.title = T("fb.btn"); }
+function labelBtn() { btn.setAttribute("aria-label", T("fb.btn")); btn.title = T("fb.btn"); q("fb-btn-label").textContent = T("fb.report"); }
 labelBtn();
 
 /* ---------- 1. button and menu ---------- */
@@ -528,7 +533,7 @@ function openItem(id) {
 /* ---------- 4. the feedback view ---------- */
 const allItems = () => [...others, ...(own || [])];
 const isOwn = it => it.project === PROJECT;
-function openCount() { return allItems().filter(i => !CLOSED.has(i.status)).length; }
+function openCount() { labelBtn(); return allItems().filter(i => !CLOSED.has(i.status)).length; }
 function filtered() {
   const s = v.q.trim().toLowerCase();
   const list = allItems().filter(i => (!v.project || i.project === v.project) && (!v.type || i.type === v.type) && (!v.priority || i.priority === v.priority)
