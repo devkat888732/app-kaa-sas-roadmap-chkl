@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SAS KB Roadmap</title>
+<title>SAS kaa Roadmap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -140,10 +140,11 @@ header > .side { position: relative; }
 .bar { height: 8px; background: var(--sunken); border-radius: 99px; overflow: hidden; display: flex; }
 .bar i { display: block; height: 100%; }
 .counts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-.count { display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--sunken); border: 1px solid transparent; cursor: pointer; text-align: left; }
+.count { display: grid; gap: 2px; align-content: start; padding: 10px 12px; border-radius: 10px; background: var(--sunken); border: 1px solid transparent; cursor: pointer; text-align: left; }
 .count:hover, .count[aria-pressed="true"] { border-color: var(--accent); }
-.count b { font-size: 22px; font-variant-numeric: tabular-nums; font-weight: 600; }
-.count span { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.count b { font-size: 22px; font-variant-numeric: tabular-nums; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+/* the status dot sits by the number, so the whole card width is left for the label (longest: "Заблокировано") */
+.count span { font-size: 12px; color: var(--muted); white-space: nowrap; }
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
 
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; overflow-x: auto; }
@@ -215,11 +216,19 @@ tbody tr:last-child td { border-bottom: 0; }
 .savebar .btn { background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 40%, transparent); padding: 4px 10px; }
 .savebar a { color: var(--bg); }
 
+/* below this width the counts get the full row, so five labels fit side by side */
+@media (max-width: 960px) {
+  .summary { grid-template-columns: 1fr; }
+}
 @media (max-width: 720px) {
+  /* phones: statuses as a compact list, label on the left, dot and number on the right */
+  .counts { grid-template-columns: 1fr; gap: 4px; }
+  .count { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; padding: 7px 12px; }
+  .count b { font-size: 17px; }
+  .count span { font-size: 13px; }
   .side { justify-content: flex-start; }
   .pv-pop { left: 0; right: auto; }
   .summary { grid-template-columns: 1fr; }
-  .counts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .row { grid-template-columns: 28px minmax(0, 1fr); }
   .row .right { grid-column: 2; }
   .feed > div { grid-template-columns: 1fr; gap: 2px; }
@@ -233,7 +242,7 @@ tbody tr:last-child td { border-bottom: 0; }
   <header>
     <div>
       <div class="label" id="repo-label">kaa_sas_knwbase</div>
-      <h1>SAS KB <span>Roadmap</span></h1>
+      <h1>SAS kaa <span>Roadmap</span></h1>
     </div>
     <div class="side">
       <div class="meta" id="meta"></div>
@@ -344,7 +353,7 @@ const I18N = {
     "noYaml": "The YAML library (js-yaml.min.js) didn't load. It has to sit in the same folder as this page; rebuild with roadmap/build.py."
   },
   ru: {
-    "st.todo": "К выполнению", "st.doing": "В работе", "st.review": "На проверке", "st.done": "Готово", "st.blocked": "Заблокировано",
+    "st.todo": "Не начато", "st.doing": "В работе", "st.review": "На проверке", "st.done": "Готово", "st.blocked": "Заблокировано",
     "tab.checklist": "Чек-лист", "tab.macros": "Макросы", "tab.review": "На ревью", "tab.activity": "Активность",
     "owner.kaa": "Каа", "owner.ai": "ИИ",
     "area.macros": "макросы", "area.blog": "блог", "area.infra": "инфраструктура", "area.docs": "документация", "area.research": "исследования",
@@ -727,7 +736,7 @@ function renderMeta() {
   if (DEFAULTS.preview) {
     const b = $("preview-banner");
     b.hidden = false; b.innerHTML = T("previewBanner", esc(DEFAULTS.preview), esc(cfg.branch));
-    document.title = "[preview] SAS KB Roadmap";
+    document.title = "[preview] SAS kaa Roadmap";
   }
   $("repo-label").textContent = `${cfg.owner}/${cfg.repo}`;
   $("meta").innerHTML = cfg.token ? `
@@ -798,7 +807,7 @@ function renderSummary() {
     </div>
     <div class="panel" style="display:grid;gap:10px">
       <div class="label">${T("byStatus")}</div>
-      <div class="counts">${STATUS.map(s => `<button class="count" type="button" data-count="${s.key}" aria-pressed="${ui.status === s.key}"><b>${by[s.key]}</b><span><i class="dot" style="background:var(--${s.key})"></i>${s.label}</span></button>`).join("")}</div>
+      <div class="counts">${STATUS.map(s => `<button class="count" type="button" data-count="${s.key}" aria-pressed="${ui.status === s.key}"><b><i class="dot" style="background:var(--${s.key})"></i>${by[s.key]}</b><span>${s.label}</span></button>`).join("")}</div>
     </div></section>`;
 }
 
