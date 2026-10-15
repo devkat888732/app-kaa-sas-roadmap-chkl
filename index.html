@@ -67,6 +67,10 @@ header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justi
 h1 { font-family: var(--font-display); font-size: clamp(26px, 4vw, 36px); line-height: 1.1; margin: 0; letter-spacing: -.01em; }
 h1 span { color: var(--accent); }
 h2 { font-family: var(--font-display); font-size: 19px; margin: 0; }
+.preview-banner { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 25; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  font-size: 13px; text-align: center; color: var(--fg); background: color-mix(in srgb, var(--review) 22%, var(--bg)); border-bottom: 1px solid color-mix(in srgb, var(--review) 45%, transparent); }
+.preview-banner[hidden] { display: none; }
+.preview-banner b { font-family: var(--font-mono); font-weight: 500; }
 .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: var(--muted); align-items: center; }
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
@@ -157,6 +161,7 @@ tbody tr:last-child td { border-bottom: 0; }
 </style>
 </head>
 <body>
+<div class="preview-banner" id="preview-banner" hidden></div>
 <div class="wrap">
   <header>
     <div>
@@ -202,7 +207,9 @@ const store = {
 };
 
 /* ---------- state ---------- */
-const cfg = Object.assign({}, DEFAULTS, store.get("cfg", {}), { token: store.get("token", null) || sessionToken() });
+// a preview keeps its own repo/branch settings (same origin as the live page); the token and look are shared
+const CFG_KEY = DEFAULTS.preview ? "cfg:preview" : "cfg";
+const cfg = Object.assign({}, DEFAULTS, store.get(CFG_KEY, {}), { token: store.get("token", null) || sessionToken() });
 function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); } catch { return null; } }
 const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false }, store.get("ui", {}));
 if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
@@ -498,6 +505,12 @@ function render() {
 }
 
 function renderMeta() {
+  if (DEFAULTS.preview) {
+    const b = $("preview-banner");
+    b.hidden = false;
+    b.innerHTML = `Preview of branch <b>${esc(DEFAULTS.preview)}</b> · tasks from <b>${esc(cfg.branch)}</b>, edits are real commits · <a href="../../">live page</a>`;
+    document.title = "[preview] SAS KB Roadmap";
+  }
   $("repo-label").textContent = `${cfg.owner}/${cfg.repo}`;
   $("meta").innerHTML = cfg.token ? `
     <a href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}" target="_blank" rel="noopener">Repository</a>
@@ -686,7 +699,7 @@ function renderConnect(fromSettings) {
     </form></section>`;
   onForm($("connect-form"), () => {
     Object.assign(cfg, { owner: $("c-owner").value.trim(), repo: $("c-repo").value.trim(), branch: $("c-branch").value.trim(), token: $("c-token").value.trim() });
-    store.set("cfg", { owner: cfg.owner, repo: cfg.repo, branch: cfg.branch });
+    store.set(CFG_KEY, { owner: cfg.owner, repo: cfg.repo, branch: cfg.branch });
     if ($("c-remember").checked) store.set("token", cfg.token); else { store.set("token", null); try { sessionStorage.setItem("roadmap:token", cfg.token); } catch {} }
     doc = null; load();
   });
