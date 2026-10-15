@@ -23,7 +23,7 @@ const CLOSED = new Set(["done", "rejected", "duplicate"]);
 const ENUMS = { type: ["bug", "update"], status: STATUSES, priority: ["high", "normal", "low"], lang: ["en", "ru"] };
 const PROJECT = DEFAULTS.project || "SASMP";
 const ITEMS_PATH = DEFAULTS.feedback_items, ALL_PATH = DEFAULTS.feedback_all;
-const HEAD_DEFAULT = `# Bugs and updates of project ${PROJECT} — the master copy of these items.\n# Field reference, ids, statuses, CSV: kaa-infra/feedback/README.md.`;
+const HEAD_DEFAULT = `# Bugs and updates of project ${PROJECT} — the master copy of these items.\n# Written by the roadmap page (report button, Feedback tab), by hand or by agents.\n# Field reference, ids, statuses, CSV: kaa-infra/feedback/README.md. Widget: roadmap/FEEDBACK__ai.md.\n# Comments in this header are kept when the page saves; comments further down are not.`;
 
 /* ---------- texts ---------- */
 Object.assign(I18N.en, {
@@ -56,7 +56,7 @@ Object.assign(I18N.en, {
   "fba.page": "Whole page", "fba.header": "Header", "fba.title": "Title", "fba.toolbar": "Toolbar", "fba.previews-menu": "Previews menu", "fba.language": "Language switch",
   "fba.theme": "Theme switch", "fba.preview-banner": "Preview banner", "fba.summary": "Summary", "fba.progress": "Overall progress", "fba.status-cards": "Status cards",
   "fba.tabs": "Tabs", "fba.filters": "Filters", "fba.editor": "Editor", "fba.settings": "Settings", "fba.save-bar": "Save bar",
-  "fba.fb-filters": "Feedback filters", "fba.fb-table": "Feedback table"
+  "fba.fb-filters": "Feedback filters", "fba.fb-table": "Feedback table", "fba.roadmap": "Roadmap", "fba.goal": "Final result"
 });
 Object.assign(I18N.ru, {
   "fb.btn": "Сообщить о баге или апдейте", "fb.report": "Сообщить", "fb.bug": "Баг", "fb.bugHint": "Что-то работает не так", "fb.update": "Апдейт", "fb.updateHint": "Улучшение или новая идея",
@@ -88,7 +88,7 @@ Object.assign(I18N.ru, {
   "fba.page": "Вся страница", "fba.header": "Шапка", "fba.title": "Заголовок", "fba.toolbar": "Панель кнопок", "fba.previews-menu": "Меню превью", "fba.language": "Выбор языка",
   "fba.theme": "Выбор темы", "fba.preview-banner": "Плашка превью", "fba.summary": "Сводка", "fba.progress": "Общий прогресс", "fba.status-cards": "Карточки статусов",
   "fba.tabs": "Вкладки", "fba.filters": "Фильтры", "fba.editor": "Редактор", "fba.settings": "Настройки", "fba.save-bar": "Плашка сохранения",
-  "fba.fb-filters": "Фильтры багов и апдейтов", "fba.fb-table": "Таблица багов и апдейтов"
+  "fba.fb-filters": "Фильтры багов и апдейтов", "fba.fb-table": "Таблица багов и апдейтов", "fba.roadmap": "Роадмап", "fba.goal": "Конечный результат"
 });
 
 /* ---------- data: this project's items (master copy) + the merged copy of all projects ---------- */

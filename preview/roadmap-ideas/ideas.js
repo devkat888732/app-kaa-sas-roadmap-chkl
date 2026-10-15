@@ -22,7 +22,7 @@ const SOURCE = "roadmap-page";
 const SRC_PATH = DEFAULTS.ideas_source || "roadmap/ideas/captured__ai.yaml";
 const ALL_PATH = DEFAULTS.ideas_all || "roadmap/ideas/all-ideas__ai.yaml";
 const REG_PATH = DEFAULTS.ideas_projects || "roadmap/ideas/projects__ai.yaml";
-const HEAD_DEFAULT = "# Ideas captured on the roadmap page — the master copy of these ideas (source: roadmap-page).\n# Format: kaa-infra/projects/README.md.";
+const HEAD_DEFAULT = "# Ideas captured on the roadmap page — the master copy of these ideas (source: roadmap-page).\n# Written by the page (report button → Idea, the Ideas tab, the agent), by hand or by agents.\n# The sync job writes each idea to kaa-infra/projects/<PRIMARY>/ideas/<id>-<slug>.md. Format: kaa-infra/projects/README.md.\n# new_projects: project tags created on this page that the registry doesn't have yet (the sync adds them).\n# Comments in this header are kept when the page saves; comments further down are not.";
 const CODE_RE = /^[A-Z]{2,5}$/;
 
 Object.assign(I18N.en, {

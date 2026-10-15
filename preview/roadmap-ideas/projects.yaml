@@ -34,3 +34,6 @@ projects:
   - code: AVITO
     name: "Avito flea market"
     description: 'Selling used items and gear, plus experimental listings'
+  - code: APPUZ
+    name: "App Puzzle by photo"
+    description: 'Service that turns an uploaded photo into a puzzle (tag created on the roadmap page)'
