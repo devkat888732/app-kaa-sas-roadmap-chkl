@@ -113,6 +113,7 @@ h1 span { color: var(--accent); }
 h2 { font-family: var(--font-display); font-size: 19px; margin: 0; }
 .preview-banner { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 25; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   font-size: 13px; text-align: center; color: var(--fg); background: color-mix(in srgb, var(--review) 22%, var(--bg)); border-bottom: 1px solid color-mix(in srgb, var(--review) 45%, transparent); }
+.preview-banner[hidden] { display: none; }
 .preview-banner b { font-family: var(--font-mono); font-weight: 500; }
 .side { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: flex-end; }
 .skin { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
