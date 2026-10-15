@@ -10,6 +10,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <!-- js-yaml 4.1.0 is bundled next to the page (cdnjs is behind Cloudflare, which is throttled in Russia). -->
 <script src="js-yaml.min.js"></script>
+<!-- report widget (bugs / updates) and the feedback view: self-contained, see roadmap/FEEDBACK__ai.md -->
+<link rel="stylesheet" href="feedback.css">
 <script>/* apply the saved theme before first paint */ try { const k = JSON.parse(localStorage.getItem("roadmap:skin") || "null"); if (k) document.documentElement.setAttribute("data-skin", k); } catch (e) {}</script>
 <style>
 /* Look: matte — muted, low-saturation colours. Four themes, chosen per device in the header:
@@ -237,23 +239,23 @@ tbody tr:last-child td { border-bottom: 0; }
 </style>
 </head>
 <body>
-<div class="preview-banner" id="preview-banner" hidden></div>
+<div class="preview-banner" id="preview-banner" data-fb="preview-banner" hidden></div>
 <div class="wrap">
-  <header>
+  <header data-fb="header">
     <div>
       <div class="label" id="repo-label">kaa_sas_knwbase</div>
-      <h1>SAS kaa <span>Roadmap</span></h1>
+      <h1 data-fb="title">SAS kaa <span>Roadmap</span></h1>
     </div>
     <div class="side">
-      <div class="meta" id="meta"></div>
-      <div class="pv-pop" id="pv-pop" role="dialog" aria-labelledby="pv-title" hidden></div>
-      <label class="skin" for="lang"><span id="lang-label">Language</span>
+      <div class="meta" id="meta" data-fb="toolbar"></div>
+      <div class="pv-pop" id="pv-pop" data-fb="previews-menu" role="dialog" aria-labelledby="pv-title" hidden></div>
+      <label class="skin" for="lang" data-fb="language"><span id="lang-label">Language</span>
         <select id="lang">
           <option value="en">English</option>
           <option value="ru">Русский</option>
         </select>
       </label>
-      <label class="skin" for="skin"><span id="skin-label">Theme</span>
+      <label class="skin" for="skin" data-fb="theme"><span id="skin-label">Theme</span>
         <select id="skin">
           <option value="">System</option>
           <option value="stone">Stone · light</option>
@@ -266,11 +268,11 @@ tbody tr:last-child td { border-bottom: 0; }
   </header>
   <main id="main"></main>
 </div>
-<div class="savebar" id="savebar" hidden></div>
+<div class="savebar" id="savebar" data-fb="save-bar" hidden></div>
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "preview": "roadmap-feedback"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "build": "2c6314e", "preview": "roadmap-feedback"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -284,11 +286,13 @@ const SKIP = /^(\.github\/|roadmap\/_site\/)/;
 const HEAD_LEN = 600;   // AI marks and reviewedByHuman sit at the top of a file
 const ID_RE = /\bT-\d{3,}\b/g;
 const CLOSE_RE = /\b(?:close[sd]?|fix(?:e[sd])?|done|resolve[sd]?)\s*:?\s*(T-\d{3,})\b/gi;
-const TABS = ["checklist", "macros", "review", "activity"].map(key => ({ key, get label() { return T("tab." + key); } }));
+const TABS = ["checklist", "macros", "review", "activity", "feedback"].map(key => ({ key, get label() { return T("tab." + key); } }));
 const YAML_OPTS = { schema: jsyaml.CORE_SCHEMA };
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 const $ = id => document.getElementById(id);
+// interface areas the report widget can point at: data-fb = machine name, data-fb-label = human name (optional; else the widget's own label for that name)
+const fbA = (name, label) => ` data-fb="${esc(name)}"${label ? ` data-fb-label="${esc(label)}"` : ""}`;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const store = {
   get(k, d) { try { const v = localStorage.getItem("roadmap:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -300,7 +304,7 @@ const store = {
 const I18N = {
   en: {
     "st.todo": "To do", "st.doing": "In progress", "st.review": "Review", "st.done": "Done", "st.blocked": "Blocked",
-    "tab.checklist": "Checklist", "tab.macros": "Macros", "tab.review": "Review queue", "tab.activity": "Activity",
+    "tab.checklist": "Checklist", "tab.macros": "Macros", "tab.review": "Review queue", "tab.activity": "Activity", "tab.feedback": "Feedback", "fbMissing": "The feedback module (feedback.js) didn't load. Reload the page; if it repeats, rebuild with roadmap/build.py.",
     "owner.kaa": "Kaa", "owner.ai": "AI",
     "area.macros": "macros", "area.blog": "blog", "area.infra": "infra", "area.docs": "docs", "area.research": "research",
     "pri.high": "high", "pri.normal": "normal", "pri.low": "low",
@@ -354,7 +358,7 @@ const I18N = {
   },
   ru: {
     "st.todo": "Не начато", "st.doing": "В работе", "st.review": "На проверке", "st.done": "Готово", "st.blocked": "Заблокировано",
-    "tab.checklist": "Чек-лист", "tab.macros": "Макросы", "tab.review": "На ревью", "tab.activity": "Активность",
+    "tab.checklist": "Чек-лист", "tab.macros": "Макросы", "tab.review": "На ревью", "tab.activity": "Активность", "tab.feedback": "Баги и апдейты", "fbMissing": "Модуль обратной связи (feedback.js) не загрузился. Перезагрузите страницу; если повторится, пересоберите через roadmap/build.py.",
     "owner.kaa": "Каа", "owner.ai": "ИИ",
     "area.macros": "макросы", "area.blog": "блог", "area.infra": "инфраструктура", "area.docs": "документация", "area.research": "исследования",
     "pri.high": "высокий", "pri.normal": "обычный", "pri.low": "низкий",
@@ -604,7 +608,7 @@ async function save() {
     if (pending.length && !saveError) { clearTimeout(saveTimer); saveTimer = setTimeout(save, 1000); }
   }
 }
-window.addEventListener("beforeunload", e => { if (pending.length || saving) { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", e => { if (pending.length || saving || (window.FB && FB.busy())) { e.preventDefault(); e.returnValue = ""; } });
 document.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); clearTimeout(saveTimer); save(); }
   else if (e.key === "Escape" && openEditor) { openEditor = null; render(); }
@@ -621,6 +625,7 @@ async function load() {
   if (saving) { setTimeout(load, 400); return; }
   if (pending.length) { clearTimeout(saveTimer); await save(); if (pending.length) return; }
   loading = true; loadError = null; render();
+  const fbLoading = window.FB ? FB.load() : null;   // the feedback log loads alongside the tasks
   try {
     const [file, treeRes, commitRes] = await Promise.all([
       gh(`${repoPath()}/contents/${TASKS_PATH}?ref=${encodeURIComponent(cfg.branch)}`),
@@ -656,6 +661,7 @@ async function load() {
       : e instanceof TypeError ? T("load.offline") + (inFrame ? T("load.inFrame") : T("load.checkNet"))
       : T("load.other") + e.message;
   } finally {
+    if (fbLoading) await fbLoading;
     loading = false; derive(); render();
   }
 }
@@ -720,14 +726,16 @@ function render() {
     $("go-settings") && ($("go-settings").onclick = () => renderConnect(true));
     return;
   }
-  const counts = { checklist: doc.tasks.length, macros: macros().length, review: reviewQueue().length, activity: commits.length };
+  const counts = { checklist: doc.tasks.length, macros: macros().length, review: reviewQueue().length, activity: commits.length, feedback: window.FB ? FB.openCount() : 0 };
+  const tabLabel = TABS.find(t => t.key === ui.tab)?.label;
   $("main").innerHTML = `
     ${loadError ? `<div class="error">${esc(loadError)}</div>` : ""}
     ${treeTruncated ? `<div class="note">${T("truncated")}</div>` : ""}
     ${renderSummary()}
     <section>
-      <div class="tabs" role="tablist">${TABS.map(t => `<button class="tab" role="tab" type="button" data-tab="${t.key}" aria-selected="${ui.tab === t.key}">${t.label}<small>${counts[t.key]}</small></button>`).join("")}</div>
-      <div id="view">${{ checklist: renderChecklist, macros: renderMacros, review: renderReview, activity: renderActivity }[ui.tab]()}</div>
+      <div class="tabs" role="tablist"${fbA("tabs")}>${TABS.map(t => `<button class="tab" role="tab" type="button" data-tab="${t.key}"${fbA(t.key, t.label)} aria-selected="${ui.tab === t.key}">${t.label}<small>${counts[t.key]}</small></button>`).join("")}</div>
+      <div id="view"${fbA(ui.tab, tabLabel)}>${{ checklist: renderChecklist, macros: renderMacros, review: renderReview, activity: renderActivity,
+        feedback: () => window.FB ? FB.renderView() : `<div class="error" style="margin-top:14px">${T("fbMissing")}</div>` }[ui.tab]()}</div>
     </section>`;
   bind();
 }
@@ -799,15 +807,15 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("pv-pop
 function renderSummary() {
   const n = doc.tasks.length || 1;
   const by = Object.fromEntries(STATUS.map(s => [s.key, doc.tasks.filter(t => effStatus(t) === s.key).length]));
-  return `<section class="summary" aria-label="${T("progress")}">
-    <div class="panel" style="display:grid;gap:10px">
+  return `<section class="summary" aria-label="${T("progress")}"${fbA("summary")}>
+    <div class="panel" style="display:grid;gap:10px"${fbA("progress")}>
       <div class="label">${T("overall")}</div>
       <div><span class="big">${Math.round(100 * by.done / n)}%</span> <span class="muted">${T("ofDone", by.done, doc.tasks.length)}</span></div>
       <div class="bar">${STATUS.filter(s => by[s.key]).map(s => `<i style="width:${100 * by[s.key] / n}%;background:var(--${s.key})" title="${s.label}: ${by[s.key]}"></i>`).join("")}</div>
     </div>
-    <div class="panel" style="display:grid;gap:10px">
+    <div class="panel" style="display:grid;gap:10px"${fbA("status-cards")}>
       <div class="label">${T("byStatus")}</div>
-      <div class="counts">${STATUS.map(s => `<button class="count" type="button" data-count="${s.key}" aria-pressed="${ui.status === s.key}"><b><i class="dot" style="background:var(--${s.key})"></i>${by[s.key]}</b><span>${s.label}</span></button>`).join("")}</div>
+      <div class="counts">${STATUS.map(s => `<button class="count" type="button" data-count="${s.key}"${fbA(s.key, s.label)} aria-pressed="${ui.status === s.key}"><b><i class="dot" style="background:var(--${s.key})"></i>${by[s.key]}</b><span>${s.label}</span></button>`).join("")}</div>
     </div></section>`;
 }
 
@@ -819,7 +827,7 @@ function matches(t) {
 const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? "selected" : ""}>${esc(l)}</option>`;
 
 function renderChecklist() {
-  const filters = `<div class="filters">
+  const filters = `<div class="filters"${fbA("filters")}>
     <input type="search" id="f-q" placeholder="${T("search")}" aria-label="${T("searchAria")}" value="${esc(ui.q)}">
     <select id="f-area" aria-label="${T("area")}">${opt("", T("allAreas"), ui.area)}${AREAS.map(a => opt(a, areaLabel(a), ui.area)).join("")}</select>
     <select id="f-owner" aria-label="${T("owner")}">${opt("", T("bothOwners"), ui.owner)}${Object.entries(OWNERS).map(([k, l]) => opt(k, l, ui.owner)).join("")}</select>
@@ -843,7 +851,7 @@ function renderGroup(m, tasks) {
     <div><h3>${m ? esc(m.title) : T("noMs")}</h3>${m && m.description ? `<p>${esc(m.description)}</p>` : ""}</div>
     <div class="side"><span class="mono">${done}/${tasks.length} · ${pct}%</span><span>${due}</span>${m ? `<button class="btn ghost" type="button" data-edit-ms="${esc(m.id)}">${T("edit")}</button>` : ""}</div>
     <div class="bar"><i style="width:${pct}%;background:var(--accent)"></i></div>`;
-  return `<section class="group" aria-label="${m ? esc(m.title) : T("noMs")}">
+  return `<section class="group" aria-label="${m ? esc(m.title) : T("noMs")}"${fbA("milestone-" + key, m ? m.title : T("noMs"))}>
     <div class="group-head">${head}</div>
     ${shown.length ? shown.map(renderRow).join("") : `<div class="empty">${tasks.length ? T("noMatch") : T("noTasks")}</div>`}
     ${openEditor === "new:" + key ? `<div class="row"><span></span>${renderTaskEditor(null, m ? m.id : "")}</div>` : `<div class="add-row"><button class="btn ghost" type="button" data-add="${esc(key)}">${T("addTaskRow")}</button></div>`}
@@ -852,7 +860,7 @@ function renderGroup(m, tasks) {
 
 function renderRow(t) {
   const st = effStatus(t), auto = derived[t.id]?.auto;
-  return `<div class="row ${st === "done" ? "is-done" : ""}">
+  return `<div class="row ${st === "done" ? "is-done" : ""}"${fbA("task-" + t.id, t.id + " · " + t.title)}>
     <input type="checkbox" data-check="${esc(t.id)}" ${st === "done" ? "checked" : ""} ${auto ? "disabled" : ""} aria-label="${esc(T("markDoneAria", t.id))}" title="${esc(auto ? T("autoUpdated", auto) : T("markDone"))}">
     <div style="min-width:0">
       <button class="title" type="button" data-open="${esc(t.id)}">${esc(t.title)}</button>
@@ -874,7 +882,7 @@ function renderRow(t) {
 function renderTaskEditor(t, msId) {
   const v = t || { id: nextId(), title: "", milestone: msId, area: "macros", status: "todo", owner: "kaa", priority: "normal", due: "", notes: "", links: [] };
   const d = t ? derived[t.id] : null;
-  return `<form class="editor" data-form="${t ? esc(t.id) : "new"}">
+  return `<form class="editor" data-form="${t ? esc(t.id) : "new"}"${fbA("editor")}>
     <label class="field"><span>${T("title")}</span><input type="text" name="title" value="${esc(v.title)}" required placeholder="${T("titlePh")}"></label>
     <div class="grid2">
       <label class="field"><span>${T("status")}</span><select name="status">${STATUS.map(s => opt(s.key, s.label, v.status)).join("")}</select></label>
@@ -912,7 +920,7 @@ function renderMacros() {
   if (!list.length) return `<div class="note" style="margin-top:14px">${T("noMacros")}</div>`;
   const st = (on, l) => `<span class="stage ${on ? "on" : "off"}" title="${l}: ${on ? T("stageDone") : T("stageMissing")}">${on ? "✓" : "·"}</span>`;
   return `<div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>${T("macro")}</th><th>${T("schema")}</th><th>${T("card")}</th><th>${T("diagram")}</th><th>${T("reviewed")}</th><th>${T("progress")}</th></tr></thead><tbody>
-    ${list.map(m => `<tr><td class="mono"><a href="${esc(ghUrl(m.dir))}" target="_blank" rel="noopener">%${esc(m.name)}</a></td>
+    ${list.map(m => `<tr${fbA("macro-" + m.name, "%" + m.name)}><td class="mono"><a href="${esc(ghUrl(m.dir))}" target="_blank" rel="noopener">%${esc(m.name)}</a></td>
       <td>${st(m.stages.schema, T("schema"))}</td><td>${st(m.stages.card, T("card"))}</td><td>${st(m.stages.diagram, T("diagram"))}</td><td>${st(m.stages.reviewed, T("reviewed"))}</td>
       <td style="min-width:140px"><div class="bar"><i style="width:${m.progress}%;background:var(--accent)"></i></div><span class="mono muted" style="font-size:12px">${m.progress}%</span></td></tr>`).join("")}
     </tbody></table></div>`;
@@ -929,7 +937,7 @@ function renderReview() {
 
 function renderActivity() {
   if (!commits.length) return `<div class="note" style="margin-top:14px">${T("noCommits")}</div>`;
-  return `<div class="feed" style="margin-top:14px">${commits.slice(0, 50).map(c => `<div>
+  return `<div class="feed" style="margin-top:14px">${commits.slice(0, 50).map(c => `<div${fbA("commit-" + c.short, c.short + " · " + c.subject)}>
     <a class="mono" href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}/commit/${esc(c.sha)}" target="_blank" rel="noopener">${esc(c.short)}</a>
     <span class="subj">${esc(c.subject)} ${c.refs.map(r => `<button class="chip" type="button" data-jump="${esc(r)}" style="border:0;cursor:pointer">${esc(r)}</button>`).join(" ")}</span>
     <span class="muted mono" style="font-size:12px">${fmtDate(c.date)}</span></div>`).join("")}</div>`;
@@ -951,7 +959,7 @@ function renderSavebar() {
 
 function renderConnect(fromSettings) {
   renderMeta();
-  $("main").innerHTML = `<section class="panel connect">
+  $("main").innerHTML = `<section class="panel connect"${fbA("settings")}>
     <h2>${fromSettings ? T("settings") : T("connect")}</h2>
     ${inFrame ? `<div class="error">${T("inFrame")}</div>` : ""}
     <p class="muted" style="margin:0">${T("connectIntro", TASKS_PATH)}</p>
@@ -1045,6 +1053,7 @@ function bind() {
     edit({ type: "ms", id: f.dataset.msForm, fields: { title: fd.get("title").trim(), due: fd.get("due"), description: fd.get("description").trim() } });
     openEditor = null; render();
   }));
+  if (ui.tab === "feedback" && window.FB) FB.bindView(root);
 }
 
 function showCrash(msg) {
@@ -1054,16 +1063,17 @@ function showCrash(msg) {
   $("main").prepend(box);
 }
 // only this page's own scripts may raise the crash banner; errors from browser extensions or a host frame's injected code are ignored
-const ownScript = f => !f || f.split("#")[0] === location.href.split("#")[0] || /\/js-yaml\.min\.js$/.test(f);
+const ownScript = f => !f || f.split("#")[0] === location.href.split("#")[0] || /\/(js-yaml\.min|feedback)\.js$/.test(f);
 window.addEventListener("error", e => { if (ownScript(e.filename)) showCrash(e.message || "script error"); });
 window.addEventListener("unhandledrejection", e => showCrash(e.reason && e.reason.message || String(e.reason)));
 
 if (typeof jsyaml === "undefined") {
   $("main").innerHTML = `<div class="error">${T("noYaml")}</div>`;
 } else {
-  render();
-  load();
+  // start once every script has run, so feedback.js (loaded after this block) is in place
+  document.addEventListener("DOMContentLoaded", () => { render(); load(); });
 }
 </script>
+<script src="feedback.js"></script>
 </body>
 </html>
