@@ -1,0 +1,29 @@
+/* AI-generated (Claude) · 2026-10-15 · not reviewed by a human
+   Ideas (ideas.js): project tag chips, idea cards. Builds on feedback.css (fb-form, fb-view, fb-pill) and the host page's tokens. */
+.id-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.id-chip { border: 1px solid var(--line); background: var(--glass-strong); color: var(--fg); border-radius: 99px; padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+.id-chip .mono { font-size: 12px; color: var(--muted); }
+.id-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.id-chip[aria-pressed="true"] .mono { color: inherit; opacity: .8; }
+.id-chip-add { border-style: dashed; color: var(--accent); }
+.id-newtag { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.id-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.id-card { border-radius: var(--radius); border: 1px solid var(--glass-edge); background: var(--glass); box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); overflow: hidden; }
+.id-card.is-open { border-color: color-mix(in srgb, var(--accent) 45%, var(--glass-edge)); }
+.id-head { display: grid; gap: 6px; width: 100%; text-align: left; padding: 12px 14px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.id-head:hover { background: var(--sunken); }
+.id-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.id-id { font-size: 12px; color: var(--muted); }
+.id-when { font-size: 12px; margin-left: auto; }
+.id-name { font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.id-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.id-tag { font-family: var(--font-mono); font-size: 11.5px; padding: 1px 7px; border-radius: 6px; background: var(--sunken); color: var(--muted); }
+.id-tag.is-primary { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.fb-pill.id-st-new { color: var(--accent); }
+.fb-pill.id-st-exploring { color: var(--doing); }
+.fb-pill.id-st-planned { color: var(--done); }
+.fb-pill.id-st-parked, .fb-pill.id-st-rejected { color: var(--muted); }
+.id-detail { display: grid; gap: 12px; padding: 0 14px 14px; }
+.fb-type-dot.idea { background: var(--review); }
+@media (max-width: 720px) { .id-newtag { grid-template-columns: 1fr; } }
