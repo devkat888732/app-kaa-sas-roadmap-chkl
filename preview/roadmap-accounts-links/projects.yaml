@@ -25,6 +25,7 @@ projects:
   - code: HQ
     name: "Штаб (AI HQ in Telegram)"
     description: 'Telegram hub with a team of AI models: tasks, schedule, roadmaps across projects'
+    repo: devkat888732/kaa-hq-bot
   - code: DVBOT
     name: "Dev-bot service"
     description: 'Telegram-bot service for designing, developing and documenting web services'
