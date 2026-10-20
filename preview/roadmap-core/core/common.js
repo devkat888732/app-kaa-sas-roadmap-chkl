@@ -6,7 +6,7 @@
  * Plain scripts, no modules: each file adds functions to globalThis.RoadmapCore. The page loads them with
  * <script src="core/…">; the bot imports them for their side effect (a copy lives in kaa-hq-bot/src/core/).
  * YAML: js-yaml 4.1.0 as globalThis.jsyaml, CORE_SCHEMA (dates stay strings).
- * Files: common.js (helpers) · tasks.js · feedback.js · ideas.js. Tests: roadmap/core/test/.
+ * Files: common.js (helpers) · tasks.js · feedback.js · ideas.js · agent.js. Tests: roadmap/core/test/.
  */
 (function (root) {
 "use strict";

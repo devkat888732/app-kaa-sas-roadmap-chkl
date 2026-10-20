@@ -15,22 +15,11 @@
 (() => {
 "use strict";
 
-const OPS = ["add_task", "update_task", "add_milestone", "update_milestone", "set_goal", "add_feedback", "add_idea"];
-const FIELDS = ["ref", "task_id", "milestone_id", "title", "area", "status", "owner", "priority", "due", "notes", "description", "feedback_type", "projects"];
-const nullable = { type: ["string", "null"] };
-const SCHEMA = {
-  type: "object", additionalProperties: false, required: ["summary", "questions", "operations"],
-  properties: {
-    summary: { type: "string" },
-    questions: { type: "array", items: { type: "string" } },
-    operations: { type: "array", items: {
-      type: "object", additionalProperties: false, required: ["op", "reason", ...FIELDS],
-      properties: { op: { type: "string", enum: OPS }, reason: { type: "string" }, ...Object.fromEntries(FIELDS.map(f => [f, nullable])) }
-    } }
-  }
-};
-const JOURNAL_PATH = "roadmap/agent/inbox__ai.yaml";
-const JOURNAL_HEAD = "# AI-generated (Claude) · 2026-10-15 · not reviewed by a human\n#\n# Journal of the roadmap intake agent: what Kaa wrote, what the agent proposed, what she applied.\n# Written by the roadmap page when proposals are applied. Used to build evals (roadmap/agent/evals__ai.yaml).";
+// the agent's contract (schema, context, answer, checks) lives in roadmap/core/agent.js — shared with the Штаб bot
+const C = window.RoadmapCore;
+const SCHEMA = C.agentSchema();
+const JOURNAL_PATH = C.AGENT_JOURNAL_PATH;
+const JOURNAL_HEAD = C.AGENT_JOURNAL_HEAD;
 const DEFAULT_SETTINGS = { orKey: "", model: "openrouter/free", fallbacks: "", groqKey: "", groqModel: "llama-3.3-70b-versatile" };
 
 /* ---------- texts ---------- */
@@ -88,27 +77,19 @@ root.addEventListener("keydown", e => { if (e.key === "Escape") { e.stopPropagat
 
 /* ---------- context sent to the model ---------- */
 function context() {
-  const ms = doc.milestones.map(m => {
-    const ts = doc.tasks.filter(t => t.milestone === m.id);
-    return { id: m.id, title: m.title, due: m.due || null, description: m.description || null, tasks_total: ts.length, tasks_done: ts.filter(t => effStatus(t) === "done").length };
+  return C.agentContext(doc, {
+    today: today(), weekday: new Date().toLocaleDateString("en-GB", { weekday: "long" }), lang, project: DEFAULTS.project || "SASMP",
+    statusOf: effStatus,
+    openFeedback: window.FB && FB.openItems ? FB.openItems() : [],
+    openIdeas: window.IDEAS ? IDEAS.openIdeas() : [],
+    projects: window.IDEAS ? IDEAS.projects() : []
   });
-  return {
-    today: today(), weekday: new Date().toLocaleDateString("en-GB", { weekday: "long" }), language_of_user: lang === "ru" ? "Russian" : "English",
-    project: DEFAULTS.project || "SASMP",
-    goal: doc.goal && doc.goal.title ? doc.goal : null,
-    milestones: ms,
-    tasks: doc.tasks.map(t => ({ id: t.id, title: t.title, milestone: t.milestone || null, area: t.area, status: effStatus(t), owner: t.owner, priority: t.priority || "normal", due: t.due || null })),
-    open_feedback: window.FB && FB.openItems ? FB.openItems() : [],
-    open_ideas: window.IDEAS ? IDEAS.openIdeas() : [],
-    projects: window.IDEAS ? IDEAS.projects() : [],
-    allowed: { area: AREAS, status: STATUS.map(s => s.key), owner: ["kaa", "ai"], priority: PRIORITIES, feedback_type: ["bug", "update"] }
-  };
 }
 async function systemPrompt() {
   if (promptText) return promptText;
   const res = await fetch("agent-prompt.md", { cache: "no-store" });
   if (!res.ok) throw new Error("agent-prompt.md " + res.status);
-  promptText = (await res.text()).replace(/^<!--[\s\S]*?-->\s*/, "");
+  promptText = C.agentPromptText(await res.text());
   return promptText;
 }
 async function messages(text) {
@@ -118,7 +99,7 @@ async function messages(text) {
     if (x.role === "user") out.push({ role: "user", content: "MESSAGE:\n" + x.text });
     else out.push({ role: "assistant", content: JSON.stringify(x.data) });
   });
-  out.push({ role: "user", content: "CONTEXT:\n" + JSON.stringify(context()) + "\n\nMESSAGE:\n" + text });
+  out.push({ role: "user", content: C.agentUserMessage(context(), text) });
   return out;
 }
 
@@ -136,20 +117,7 @@ async function post(url, key, body, extra) {
   if (choice && choice.error) { const err = new Error(choice.error.message || "model error"); err.status = choice.error.code; throw err; }
   return { content: choice?.message?.content ?? "", model: json.model || body.model };
 }
-function parseAnswer(content) {
-  const text = String(content || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  const start = text.indexOf("{"), end = text.lastIndexOf("}");
-  const data = JSON.parse(start >= 0 ? text.slice(start, end + 1) : text);
-  if (!data || typeof data !== "object" || !Array.isArray(data.operations)) throw Object.assign(new Error("format"), { kind: "format" });
-  data.summary = String(data.summary || "");
-  data.questions = Array.isArray(data.questions) ? data.questions.map(String).filter(Boolean) : [];
-  data.operations = data.operations.filter(o => o && OPS.includes(o.op)).map(o => {
-    const op = { op: o.op, reason: String(o.reason || "") };
-    FIELDS.forEach(f => { op[f] = o[f] == null || o[f] === "" ? null : String(o[f]).trim(); });
-    return op;
-  });
-  return data;
-}
+const parseAnswer = C.parseAgentAnswer;
 async function ask(text) {
   const msgs = await messages(text);
   const attempts = [];
@@ -184,40 +152,10 @@ function errorText(e) {
   return T("ag.err", e.message);
 }
 
-/* ---------- checking proposals against the roadmap ---------- */
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const tagsOf = op => String(op.projects || "").split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+/* ---------- checking proposals against the roadmap (roadmap/core/agent.js) ---------- */
+const tagsOf = C.agentTags;
 function problems(op, ops) {
-  const out = [], msIds = new Set(doc.milestones.map(m => m.id)), refs = new Set(ops.filter(o => o.op === "add_milestone" && o.ref).map(o => o.ref));
-  const allowed = { area: AREAS, status: STATUS.map(s => s.key), owner: ["kaa", "ai"], priority: PRIORITIES };
-  Object.entries(allowed).forEach(([f, ok]) => { if (op[f] && !ok.includes(op[f])) out.push(T("ag.inv.field", f, op[f])); });
-  if (op.due && !DATE.test(op.due)) out.push(T("ag.inv.date", op.due));
-  const msOk = id => !id || msIds.has(id) || refs.has(id);
-  if (op.op === "add_task") {
-    if (!op.title) out.push(T("ag.inv.title"));
-    if (!op.area) out.push(T("ag.inv.field", "area", "—"));
-    if (!msOk(op.milestone_id)) out.push(T("ag.inv.ms", op.milestone_id));
-  } else if (op.op === "update_task") {
-    if (!doc.tasks.some(t => t.id === op.task_id)) out.push(T("ag.inv.task", op.task_id || "?"));
-    if (!["title", "milestone_id", "area", "status", "owner", "priority", "due", "notes"].some(f => op[f])) out.push(T("ag.inv.nothing"));
-    if (!msOk(op.milestone_id)) out.push(T("ag.inv.ms", op.milestone_id));
-  } else if (op.op === "add_milestone") {
-    if (!op.title) out.push(T("ag.inv.title"));
-  } else if (op.op === "update_milestone") {
-    if (!msIds.has(op.milestone_id)) out.push(T("ag.inv.ms", op.milestone_id || "?"));
-    if (!["title", "due", "description"].some(f => op[f])) out.push(T("ag.inv.nothing"));
-  } else if (op.op === "set_goal") {
-    if (!op.title) out.push(T("ag.inv.title"));
-  } else if (op.op === "add_feedback") {
-    if (!["bug", "update"].includes(op.feedback_type)) out.push(T("ag.inv.type"));
-    if (!op.title) out.push(T("ag.inv.title"));
-  } else if (op.op === "add_idea") {
-    const codes = new Set(window.IDEAS ? IDEAS.projects().map(p => p.code) : []), tags = tagsOf(op);
-    if (!op.title) out.push(T("ag.inv.title"));
-    if (!tags.length) out.push(T("ag.inv.noTags"));
-    tags.filter(c => !codes.has(c)).forEach(c => out.push(T("ag.inv.tag", c)));
-  }
-  return out;
+  return C.agentProblems(op, ops, doc, window.IDEAS ? IDEAS.projects() : []).map(e => T(e.key, ...e.args));
 }
 
 /* ---------- applying the accepted proposals ---------- */
@@ -275,11 +213,7 @@ async function journal(entry, applied) {
     try {
       const cur = await gh(`${url}?ref=${encodeURIComponent(cfg.branch)}`).catch(e => { if (e.status === 404) return null; throw e; });
       const text = cur ? b64decode(cur.content) : "";
-      const head = cur ? splitHeader(text)[0] : JOURNAL_HEAD;
-      const data = cur ? (jsyaml.load(text, YAML_OPTS) || {}) : {};
-      const entries = Array.isArray(data.entries) ? data.entries : [];
-      entries.push(record);
-      const body = (head || JOURNAL_HEAD) + "\n\n" + jsyaml.dump({ entries }, { ...YAML_OPTS, lineWidth: -1, noRefs: true });
+      const body = C.appendJournal(text, record);
       await gh(url, { method: "PUT", body: { message: `agent: journal (${applied.length} applied)`, content: b64encode(body), branch: cfg.branch, ...(cur ? { sha: cur.sha } : {}) } });
       return;
     } catch (e) {

@@ -15,6 +15,7 @@
 <script src="core/tasks.js"></script>
 <script src="core/feedback.js"></script>
 <script src="core/ideas.js"></script>
+<script src="core/agent.js"></script>
 <!-- report widget (bugs / updates) and the feedback view: self-contained, see roadmap/FEEDBACK__ai.md -->
 <link rel="stylesheet" href="feedback.css">
 <!-- intake agent: free text → proposals for the roadmap, see roadmap/AGENT__ai.md -->
@@ -327,7 +328,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "build": "4cfe136", "preview": "roadmap-core"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "build": "d4a2569", "preview": "roadmap-core"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -1151,7 +1152,7 @@ const ownScript = f => !f || f.split("#")[0] === location.href.split("#")[0] || 
 window.addEventListener("error", e => { if (ownScript(e.filename)) showCrash(e.message || "script error"); });
 window.addEventListener("unhandledrejection", e => showCrash(e.reason && e.reason.message || String(e.reason)));
 
-if (typeof jsyaml === "undefined" || !window.RoadmapCore || !RoadmapCore.parseTasks || !RoadmapCore.parseIdeas) {
+if (typeof jsyaml === "undefined" || !window.RoadmapCore || !RoadmapCore.parseTasks || !RoadmapCore.parseIdeas || !RoadmapCore.agentSchema) {
   $("main").innerHTML = `<div class="error">${T("noYaml")}</div>`;
 } else {
   // start once every script has run, so feedback.js (loaded after this block) is in place
