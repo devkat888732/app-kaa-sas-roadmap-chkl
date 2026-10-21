@@ -10,7 +10,7 @@ if (!C || !C.clean) throw new Error("load roadmap/core/common.js before feedback
 
 C.FEEDBACK_FIELDS = ["id", "project", "type", "status", "priority", "title", "description", "location", "anchor", "selector",
   "page", "branch", "build", "viewport", "theme", "lang", "user_agent", "reporter", "created", "updated",
-  "closed", "resolution", "work_branch", "pr", "task"];
+  "closed", "resolution", "work_branch", "pr", "task", "screenshot"];   // screenshot: path of an image in this repository (the Штаб bot saves it)
 C.FEEDBACK_REQUIRED = ["id", "project", "type", "status", "priority", "title", "description", "location", "anchor", "page",
   "branch", "build", "viewport", "theme", "lang", "user_agent", "reporter", "created", "updated"];
 C.FEEDBACK_STATUSES = ["new", "accepted", "in-progress", "in-review", "done", "rejected", "duplicate"];

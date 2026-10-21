@@ -48,7 +48,7 @@ Object.assign(I18N.en, {
   "fb.v.syncPending": p => `Only ${p} items for now: other projects appear here once the sync with kaa-infra is set up.`,
   "fb.v.readOnly": p => `Read-only here: ${p} items are edited on that project's own page.`,
   "fb.v.showOnPage": "Show on page", "fb.v.notFound": "This place isn't on the page any more.",
-  "fb.f.description": "Description", "fb.f.location": "Where", "fb.f.anchor": "Area", "fb.f.selector": "Element", "fb.f.page": "Page", "fb.f.branch": "Branch",
+  "fb.f.screenshot": "Screenshot", "fb.shotErr": "The screenshot didn't load.", "fb.f.description": "Description", "fb.f.location": "Where", "fb.f.anchor": "Area", "fb.f.selector": "Element", "fb.f.page": "Page", "fb.f.branch": "Branch",
   "fb.f.build": "Build", "fb.f.viewport": "Screen", "fb.f.theme": "Theme", "fb.f.lang": "Language", "fb.f.user_agent": "Browser", "fb.f.reporter": "Reported by",
   "fb.f.created": "Created", "fb.f.updated": "Updated", "fb.f.closed": "Closed", "fb.f.resolution": "Resolution", "fb.f.work_branch": "Work branch", "fb.f.pr": "PR", "fb.f.task": "Roadmap task",
   "fba.page": "Whole page", "fba.header": "Header", "fba.title": "Title", "fba.toolbar": "Toolbar", "fba.previews-menu": "Previews menu", "fba.language": "Language switch",
@@ -80,7 +80,7 @@ Object.assign(I18N.ru, {
   "fb.v.syncPending": p => `Пока только пункты ${p}: другие проекты появятся здесь, когда заработает синхронизация с kaa-infra.`,
   "fb.v.readOnly": p => `Здесь только просмотр: пункты ${p} меняются на странице своего проекта.`,
   "fb.v.showOnPage": "Показать на странице", "fb.v.notFound": "Этого места на странице больше нет.",
-  "fb.f.description": "Описание", "fb.f.location": "Где", "fb.f.anchor": "Область", "fb.f.selector": "Элемент", "fb.f.page": "Страница", "fb.f.branch": "Ветка",
+  "fb.f.screenshot": "Скриншот", "fb.shotErr": "Скриншот не загрузился.", "fb.f.description": "Описание", "fb.f.location": "Где", "fb.f.anchor": "Область", "fb.f.selector": "Элемент", "fb.f.page": "Страница", "fb.f.branch": "Ветка",
   "fb.f.build": "Сборка", "fb.f.viewport": "Экран", "fb.f.theme": "Тема", "fb.f.lang": "Язык", "fb.f.user_agent": "Браузер", "fb.f.reporter": "Кто сообщил",
   "fb.f.created": "Создан", "fb.f.updated": "Изменён", "fb.f.closed": "Закрыт", "fb.f.resolution": "Итог", "fb.f.work_branch": "Ветка работы", "fb.f.pr": "PR", "fb.f.task": "Задача роадмапа",
   "fba.page": "Вся страница", "fba.header": "Шапка", "fba.title": "Заголовок", "fba.toolbar": "Панель кнопок", "fba.previews-menu": "Меню превью", "fba.language": "Выбор языка",
@@ -552,6 +552,7 @@ function renderDetail(it) {
   const input = (f) => `<label class="field"><span>${T("fb.f." + f)}</span><input type="text" name="${f}" value="${esc(it[f] || "")}"></label>`;
   return `<div class="fb-detail">
     <p class="desc">${esc(it.description)}</p>
+    ${it.screenshot ? `<figure class="fb-shot"><a href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}/blob/${esc(cfg.branch)}/${esc(it.screenshot)}" target="_blank" rel="noopener"><img data-fb-shot="${esc(it.screenshot)}" alt="${esc(T("fb.f.screenshot"))}"></a></figure>` : ""}
     <div class="actions" style="justify-content:flex-start">
       ${editable && it.anchor && it.anchor !== "page" ? `<button class="btn" type="button" data-fb-show="${esc(it.anchor)}">${T("fb.v.showOnPage")}</button>` : ""}
       <button class="btn ghost" type="button" data-fb-copy="${esc(it.id)}">${T("fb.copy")}</button>
@@ -568,6 +569,7 @@ function renderDetail(it) {
     <dl>${shown.filter(f => asText(it[f])).map(f => `<dt>${T("fb.f." + f)}</dt><dd${f === "anchor" || f === "selector" || f === "build" ? ' class="mono"' : ""}>${link(f, it[f])}</dd>`).join("")}</dl>
   </div>`;
 }
+const shots = new Map();
 function bindView(rootEl) {
   const keep = () => store.set("fbView", v);
   const q = rootEl.querySelector("#fbv-q");
@@ -580,6 +582,14 @@ function bindView(rootEl) {
   rootEl.querySelectorAll("[data-fb-row]").forEach(tr => tr.onclick = () => { openId = openId === tr.dataset.fbRow ? null : tr.dataset.fbRow; render(); });
   rootEl.querySelectorAll("[data-fb-close]").forEach(b => b.onclick = () => { openId = null; render(); });
   rootEl.querySelectorAll("[data-fb-copy]").forEach(b => b.onclick = () => copyId(b.dataset.fbCopy));
+  // screenshots live in the private repository: loaded through the API with the token, kept for the session
+  rootEl.querySelectorAll("img[data-fb-shot]").forEach(img => {
+    const p = img.dataset.fbShot;
+    if (shots.has(p)) { img.src = shots.get(p); return; }
+    gh(`${repoPath()}/contents/${p.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(cfg.branch)}`)
+      .then(f => { const url = `data:${/\.png$/i.test(p) ? "image/png" : "image/jpeg"};base64,${String(f.content || "").replace(/\s/g, "")}`; shots.set(p, url); img.src = url; })
+      .catch(() => { img.replaceWith(Object.assign(document.createElement("span"), { className: "muted", textContent: T("fb.shotErr") })); });
+  });
   rootEl.querySelectorAll("[data-fb-show]").forEach(b => b.onclick = () => showOnPage(b.dataset.fbShow));
   rootEl.querySelectorAll("[data-fb-edit]").forEach(f => {
     const run = e => {

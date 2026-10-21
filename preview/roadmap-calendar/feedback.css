@@ -134,3 +134,5 @@
   .fb-table td.fb-c-pri, .fb-table td.fb-c-proj, .fb-table td.fb-c-created { display: none; }
   .fb-table tr.fb-detail-row td { padding: 10px 12px; }
 }
+.fb-shot { margin: 0; }
+.fb-shot img { display: block; max-width: min(100%, 420px); max-height: 520px; border-radius: 10px; border: 1px solid var(--line); }
