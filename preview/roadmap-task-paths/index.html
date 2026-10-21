@@ -114,6 +114,7 @@ h2 { font-family: var(--font-display); font-size: 19px; margin: 0; }
 .preview-banner { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 25; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   font-size: 13px; text-align: center; color: var(--fg); background: color-mix(in srgb, var(--review) 22%, var(--bg)); border-bottom: 1px solid color-mix(in srgb, var(--review) 45%, transparent); }
 .preview-banner[hidden] { display: none; }
+.rv-branch { font-size: 15px; font-weight: 600; margin: 22px 0 8px; }
 header > .side { position: relative; }
 .pv-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: min(360px, calc(100vw - 32px)); display: grid; gap: 10px; padding: 14px;
   border-radius: var(--radius); background: var(--glass-strong); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, .18);
@@ -333,6 +334,7 @@ const I18N = {
     "noMacros": "No macros documented yet. Each folder in <code>macros/&lt;name&gt;/</code> appears here with its pipeline: schema → card → diagram → reviewed by a human. Stages are read from the files in the repo.",
     "macro": "Macro", "schema": "Schema", "card": "Card", "diagram": "Diagram", "reviewed": "Reviewed", "stageDone": "done", "stageMissing": "missing",
     "allReviewed": "Every AI-generated file has been reviewed.",
+    "reviewBranch": b => `In branch ${b} — not on the data branch yet (waiting in a PR)`,
     "reviewNote": mark => `AI-generated files still marked <code>${mark}</code>. After reviewing a file, change its mark to “reviewed by a human, YYYY-MM-DD”; it leaves this list on the next refresh.`,
     "file": "File", "folder": "Folder", "root": "root", "noCommits": "No commits found.",
     "saving": "Saving to GitHub…", "retry": "Retry", "pending": n => `${n} change${n > 1 ? "s" : ""} · saving in a moment`, "saveNow": "Save now", "savedCommit": "Saved · commit",
@@ -388,6 +390,7 @@ const I18N = {
     "noMacros": "Пока нет описанных макросов. Каждая папка <code>macros/&lt;имя&gt;/</code> появится здесь со своим конвейером: схема → карточка → диаграмма → проверено человеком. Этапы определяются по файлам в репозитории.",
     "macro": "Макрос", "schema": "Схема", "card": "Карточка", "diagram": "Диаграмма", "reviewed": "Проверено", "stageDone": "есть", "stageMissing": "нет",
     "allReviewed": "Все файлы, созданные ИИ, проверены.",
+    "reviewBranch": b => `В ветке ${b} — ещё не в основной ветке (ждёт в PR)`,
     "reviewNote": mark => `Файлы, созданные ИИ, у которых ещё стоит пометка <code>${mark}</code>. После проверки замените пометку на «reviewed by a human, ГГГГ-ММ-ДД» — при следующем обновлении файл уйдёт из списка.`,
     "file": "Файл", "folder": "Папка", "root": "корень", "noCommits": "Коммитов не найдено.",
     "saving": "Сохраняю в GitHub…", "retry": "Повторить", "pending": n => `${n} ${plural(n, "изменение", "изменения", "изменений")} · сохраню через мгновение`, "saveNow": "Сохранить сейчас", "savedCommit": "Сохранено · коммит",
@@ -432,6 +435,7 @@ function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); 
 const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false }, store.get("ui", {}));
 if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
 let doc = null, header = "", fileSha = null, tree = [], treeTruncated = false, commits = [], contents = {}, derived = {};
+let branchReview = [];   // [{ branch, files: [path] }] — AI-marked files changed in roadmap-* branches, not yet on the data branch
 let pending = [], saveTimer = null, savebarTimer = null, saving = false, lastSave = null, saveError = null, openEditor = null, loadError = null, loading = false;
 
 /* ---------- theme (per device) ---------- */
@@ -649,6 +653,7 @@ async function load() {
     scan.forEach((b, i) => { if (texts[i] != null) { contents[b.path] = texts[i]; fresh[b.sha] = texts[i]; } });
     store.set("heads", fresh);
     store.set("lastRepo", { owner: cfg.owner, repo: cfg.repo });
+    loadBranchReview().then(render);   // not awaited: the page is usable while branches are checked
   } catch (e) {
     loadError = e.status === 401 ? T("load.401")
       : e.status === 404 ? T("load.404", TASKS_PATH, `${cfg.owner}/${cfg.repo}`, cfg.branch)
@@ -720,7 +725,7 @@ function render() {
     $("go-settings") && ($("go-settings").onclick = () => renderConnect(true));
     return;
   }
-  const counts = { checklist: doc.tasks.length, macros: macros().length, review: reviewQueue().length, activity: commits.length };
+  const counts = { checklist: doc.tasks.length, macros: macros().length, review: reviewQueue().length + branchReview.reduce((n, x) => n + x.files.length, 0), activity: commits.length };
   $("main").innerHTML = `
     ${loadError ? `<div class="error">${esc(loadError)}</div>` : ""}
     ${treeTruncated ? `<div class="note">${T("truncated")}</div>` : ""}
@@ -918,13 +923,39 @@ function renderMacros() {
     </tbody></table></div>`;
 }
 
+/* AI-marked files that are only in a branch so far (a design or a document waiting for review in a PR).
+ * On a preview: that branch; on the live page: every roadmap-* branch (up to 10). Compared with the data branch. */
+async function loadBranchReview() {
+  try {
+    let names = DEFAULTS.preview ? [DEFAULTS.preview]
+      : (await gh(`${repoPath()}/branches?per_page=100`)).map(b => b.name).filter(n => /^roadmap-/.test(n)).slice(0, 10);
+    names = names.filter(n => n !== cfg.branch);
+    const found = await pool(names, 4, async branch => {
+      const cmp = await gh(`${repoPath()}/compare/${encodeURIComponent(cfg.branch)}...${encodeURIComponent(branch)}`).catch(() => null);
+      const changed = ((cmp && cmp.files) || []).filter(f => f.status !== "removed" && SCAN_EXT.test(f.filename) && !SKIP.test(f.filename));
+      const heads = await pool(changed, 4, async f => {
+        const text = await gh(`${repoPath()}/contents/${f.filename.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch)}`, { raw: true }).catch(() => null);
+        return text == null ? "" : String(text).slice(0, HEAD_LEN);
+      });
+      const files = changed.filter((f, i) => heads[i].includes(AI_MARK) || /"reviewedByHuman"\s*:\s*false/.test(heads[i])).map(f => f.filename);
+      return { branch, files };
+    });
+    branchReview = found.filter(x => x.files.length);
+  } catch { branchReview = []; }
+}
+const branchFileUrl = (branch, path) => `https://github.com/${cfg.owner}/${cfg.repo}/blob/${encodeURIComponent(branch)}/${path}`;
 function renderReview() {
   const q = reviewQueue();
-  if (!q.length) return `<div class="note" style="margin-top:14px">${T("allReviewed")}</div>`;
+  const inBranches = branchReview.map(x => `
+    <h3 class="rv-branch">${T("reviewBranch", esc(x.branch))}</h3>
+    <div class="table-wrap"><table><thead><tr><th>${T("file")}</th><th>${T("folder")}</th></tr></thead><tbody>
+    ${x.files.map(p => `<tr><td class="mono" style="font-size:13px"><a href="${esc(branchFileUrl(x.branch, p))}" target="_blank" rel="noopener">${esc(p)}</a></td><td class="muted">${esc(p.includes("/") ? p.split("/")[0] : T("root"))}</td></tr>`).join("")}
+    </tbody></table></div>`).join("");
+  if (!q.length) return `<div class="note" style="margin-top:14px">${T("allReviewed")}</div>${inBranches}`;
   return `<div class="note" style="margin:14px 0 12px">${T("reviewNote", AI_MARK)}</div>
     <div class="table-wrap"><table><thead><tr><th>${T("file")}</th><th>${T("folder")}</th></tr></thead><tbody>
     ${q.map(p => `<tr><td class="mono" style="font-size:13px"><a href="${esc(ghUrl(p))}" target="_blank" rel="noopener">${esc(p)}</a></td><td class="muted">${esc(p.includes("/") ? p.split("/")[0] : T("root"))}</td></tr>`).join("")}
-    </tbody></table></div>`;
+    </tbody></table></div>${inBranches}`;
 }
 
 function renderActivity() {
