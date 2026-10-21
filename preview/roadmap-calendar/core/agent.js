@@ -147,8 +147,21 @@ C.agentEventOps = (proposals, events, today) => {
     if (/^none$/i.test(op.repeat)) return { every: "", interval: "", days: [], month_day: "" };
     return C.parseRepeat(op.repeat);
   };
+  // the same event proposed again (a clarification answered before the first proposals were applied): same title and
+  // the same repeat or dates → it changes that event instead of adding a twin
+  const twin = (op, rule) => events.find(e => String(e.title).trim().toLowerCase() === String(op.title || "").trim().toLowerCase()
+    && (e.every || "") === (rule.every || "") && String(+e.interval || 1) === String(+rule.interval || 1)
+    && [...e.days].sort().join() === [...(rule.days || [])].sort().join() && (e.month_day || "") === (rule.month_day || "")
+    && (rule.every ? true : [...e.dates].sort().join() === C.asList(op.dates).sort().join()));
   proposals.forEach((op, i) => {
-    if (op.op === "add_event") {
+    if (op.op === "add_event" && twin(op, ruleOf(op) || {})) {
+      const e = twin(op, ruleOf(op) || {}), fields = {};
+      ["time", "minutes", "notes"].forEach(f => { if (op[f]) fields[f] = op[f]; });
+      if (op.starts) fields.from = op.starts;
+      if (op.ends) fields.until = op.ends;
+      run({ type: "update", id: e.id, fields });
+      results[i] = e.id;
+    } else if (op.op === "add_event") {
       const id = C.nextEventId(events), rule = ruleOf(op) || {};
       run({ type: "add", item: C.clean({ id, title: op.title, time: op.time || "", minutes: op.minutes || "", ...rule, dates: C.asList(op.dates),
         from: rule.every ? op.starts || today : op.starts || "", until: op.ends || "", notes: op.notes || "", created: today }) });

@@ -48,7 +48,8 @@ Every operation has **all** of these keys; a key that doesn't apply to the opera
 `milestone_id` of a new task may be the `ref` of an `add_milestone` in the same answer.
 
 Calendar fields:
-- `time` — start, `HH:MM`, Moscow time; `null` = all day. `minutes` — length in minutes as digits ("60"); `null` = not given.
+- `time` — start, `HH:MM`, Moscow time; `null` = all day. `minutes` — length in minutes as digits: "час" → "60", "полтора часа" → "90", "три часа" → "180"; `null` = not given.
+- A clarification («в 19:00», «три часа») about events proposed in an earlier turn: propose those events again, complete, with the same title and repeat — they replace the earlier proposals (or update the events if they were applied). Don't split one event into two.
 - `repeat` — `day`, `week:<days>`, `month:<day of month>`; every N: `day/2`, `week/2:tue`, `month/3:1`. Days: `mon,tue,wed,thu,fri,sat,sun`.
 - `dates` — comma-separated `YYYY-MM-DD` for one-off dates (or dates added to a repeat).
 - `starts` / `ends` — first and last day of a repeat (`YYYY-MM-DD`); `starts` `null` = from today.
