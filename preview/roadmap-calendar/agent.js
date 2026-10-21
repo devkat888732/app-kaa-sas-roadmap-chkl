@@ -21,7 +21,10 @@ const SCHEMA = C.agentSchema();
 const JOURNAL_PATH = C.AGENT_JOURNAL_PATH;
 const JOURNAL_HEAD = C.AGENT_JOURNAL_HEAD;
 // Groq shut llama-3.3-70b-versatile down on 2026-08-16; openai/gpt-oss-120b is its replacement (console.groq.com/docs/deprecations)
-const DEFAULT_SETTINGS = { orKey: "", model: "openrouter/free", fallbacks: "", groqKey: "", groqModel: "openai/gpt-oss-120b" };
+// viaBot: ask the model through the Штаб bot (its keys; the page's GitHub token proves it's Kaa) — from Russia the browser
+// often can't reach openrouter.ai; the keys below are then only a fallback. botUrl: the bot's Worker (the test bot until go-live).
+const BOT_URL = "https://kaa-hq-bot-preview.dev-kat888.workers.dev";
+const DEFAULT_SETTINGS = { viaBot: "1", botUrl: BOT_URL, orKey: "", model: "openrouter/free", fallbacks: "", groqKey: "", groqModel: "openai/gpt-oss-120b" };
 const RETIRED_GROQ = ["llama-3.3-70b-versatile"];
 
 /* ---------- texts ---------- */
@@ -30,6 +33,8 @@ Object.assign(I18N.en, {
   "ag.ph": "E.g.: for the blog we still need a domain, urgent. I've finished T-012. Yoga on Tue and Thu at 8:00.", "ag.send": "Send", "ag.thinking": "Thinking…",
   "ag.settings": "Settings", "ag.close": "Close", "ag.back": "Back", "ag.orKey": "OpenRouter key", "ag.model": "Model", "ag.fallbacks": "Fallback models (comma-separated, optional)",
   "ag.groqKey": "Groq key (optional, used if OpenRouter fails)", "ag.groqModel": "Groq model", "ag.save": "Save", "ag.keysNote": "Keys are kept only in this browser and sent only to openrouter.ai / api.groq.com.",
+  "ag.errBotAuth": "The bot didn't accept the GitHub token: it must be the token of the owner of the repositories.", "ag.errBotNet": u => `The bot didn't answer (${u}). Without a VPN Cloudflare addresses may be blocked; check the address in the settings.`,
+  "ag.viaBot": "Ask the model through the Штаб bot (no keys needed here)", "ag.botUrl": "Bot address", "ag.viaBotNote": "The bot checks your GitHub token (it must be yours) and uses its own model keys. The keys below are only a fallback.",
   "ag.needKey": "Add your OpenRouter key in the agent's settings first.", "ag.openSettings": "Open settings", "ag.needData": "The roadmap hasn't loaded yet.",
   "ag.apply": n => `Apply selected (${n})`, "ag.dismiss": "Dismiss all", "ag.applied": "Applied", "ag.dismissed": "Dismissed", "ag.nothing": "Nothing to propose.",
   "ag.questions": "Questions", "ag.via": m => `model: ${m}`, "ag.err401": "The key was not accepted. Check it in the agent's settings.",
@@ -49,6 +54,8 @@ Object.assign(I18N.ru, {
   "ag.ph": "Например: к блогу надо ещё выбрать домен, срочно. T-012 я уже сделала. Йога по вт и чт в 8:00.", "ag.send": "Отправить", "ag.thinking": "Думаю…",
   "ag.settings": "Настройки", "ag.close": "Закрыть", "ag.back": "Назад", "ag.orKey": "Ключ OpenRouter", "ag.model": "Модель", "ag.fallbacks": "Запасные модели (через запятую, необязательно)",
   "ag.groqKey": "Ключ Groq (необязательно, если OpenRouter не ответит)", "ag.groqModel": "Модель Groq", "ag.save": "Сохранить", "ag.keysNote": "Ключи хранятся только в этом браузере и отправляются только на openrouter.ai / api.groq.com.",
+  "ag.errBotAuth": "Бот не принял GitHub-токен: это должен быть токен владельца репозиториев.", "ag.errBotNet": u => `Бот не ответил (${u}). Без VPN адреса Cloudflare могут блокироваться; проверь адрес в настройках.`,
+  "ag.viaBot": "Спрашивать модель через бота Штаб (ключи здесь не нужны)", "ag.botUrl": "Адрес бота", "ag.viaBotNote": "Бот проверяет твой GitHub-токен (он должен быть твоим) и использует свои ключи моделей. Ключи ниже — только запасной путь.",
   "ag.needKey": "Сначала добавьте ключ OpenRouter в настройках агента.", "ag.openSettings": "Открыть настройки", "ag.needData": "Роадмап ещё не загрузился.",
   "ag.apply": n => `Применить выбранное (${n})`, "ag.dismiss": "Отклонить всё", "ag.applied": "Применено", "ag.dismissed": "Отклонено", "ag.nothing": "Предложить нечего.",
   "ag.questions": "Вопросы", "ag.via": m => `модель: ${m}`, "ag.err401": "Ключ не принят. Проверьте его в настройках агента.",
@@ -139,6 +146,16 @@ async function askWith(msgs, { schema, parse, onAttempt } = {}) {
   const orHeaders = { "HTTP-Referer": location.origin + location.pathname, "X-Title": "SAS kaa Roadmap" };
   const fallbacks = settings.fallbacks.split(",").map(s => s.trim()).filter(Boolean);
   const orBody = extra => ({ ...(fallbacks.length ? { models: [settings.model, ...fallbacks] } : { model: settings.model }), messages: msgs, temperature: 0.2, ...extra });
+  if (settings.viaBot && cfg.token) attempts.push(["Штаб", async () => {
+    let res;
+    try {
+      res = await fetch(settings.botUrl.replace(/\/$/, "") + "/model", { method: "POST", headers: { "Content-Type": "application/json", "X-GitHub-Token": cfg.token },
+        body: JSON.stringify({ messages: msgs, ...(schema ? { schema } : {}) }) });
+    } catch { const e = new Error(T("ag.errNet")); e.kind = "net"; e.viaBot = true; throw e; }
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.error) { const e = new Error((j.error && j.error.message) || res.statusText); e.status = (j.error && j.error.code) || res.status; e.viaBot = true; throw e; }
+    return { content: j.content, model: j.model ? `${j.model} · через бота` : "через бота" };
+  }]);
   if (settings.orKey) {
     if (schema) attempts.push(["OpenRouter", () => post("https://openrouter.ai/api/v1/chat/completions", settings.orKey,
       orBody({ response_format: { type: "json_schema", json_schema: { name: schema.name, strict: true, schema: schema.schema } }, provider: { require_parameters: true } }), orHeaders)]);
@@ -156,13 +173,15 @@ async function askWith(msgs, { schema, parse, onAttempt } = {}) {
       catch { const e = new Error("format"); e.kind = "format"; throw e; }
     } catch (e) {
       last = e;
-      if (e.status === 401 || e.status === 403) break;   // a wrong key won't get better on the next attempt with the same key
+      if ((e.status === 401 || e.status === 403) && !e.viaBot) break;   // a wrong key won't get better on the next attempt with the same key
     }
   }
   throw last || new Error("no attempts");
 }
 function errorText(e) {
   if (!e) return T("ag.err", "?");
+  if (e.viaBot && (e.status === 401 || e.status === 403)) return T("ag.errBotAuth");
+  if (e.viaBot && e.kind === "net") return T("ag.errBotNet", settings.botUrl);
   if (e.status === 401 || e.status === 403) return T("ag.err401");
   if (e.status === 429) return T("ag.err429");
   if (e.kind === "net") return T("ag.errNet");
@@ -315,6 +334,9 @@ function renderPanel() {
       <button class="btn ghost ag-x" type="button" data-act="close" aria-label="${T("ag.close")}">✕</button></div></div>`;
   if (view === "settings") {
     root.innerHTML = head + `<form class="ag-settings" id="ag-settings">
+      <label class="field ag-check"><span><input type="checkbox" name="viaBot" value="1" ${settings.viaBot ? "checked" : ""}> ${T("ag.viaBot")}</span></label>
+      <label class="field"><span>${T("ag.botUrl")}</span><input type="text" name="botUrl" value="${esc(settings.botUrl)}"></label>
+      <p class="muted ag-note">${T("ag.viaBotNote")}</p>
       <label class="field"><span>${T("ag.orKey")}</span><input type="password" name="orKey" value="${esc(settings.orKey)}" placeholder="sk-or-…" autocomplete="off"></label>
       <label class="field"><span>${T("ag.model")}</span><input type="text" name="model" value="${esc(settings.model)}"></label>
       <label class="field"><span>${T("ag.fallbacks")}</span><input type="text" name="fallbacks" value="${esc(settings.fallbacks)}" placeholder="meta-llama/llama-3.3-70b-instruct:free"></label>
@@ -323,10 +345,10 @@ function renderPanel() {
       <p class="muted ag-note">${T("ag.keysNote")}</p>
       <div class="actions"><button class="btn primary" type="submit">${T("ag.save")}</button></div></form>`;
     const f = root.querySelector("#ag-settings");
-    const saveSettings = e => { e.preventDefault(); const fd = new FormData(f); Object.keys(DEFAULT_SETTINGS).forEach(k => settings[k] = String(fd.get(k) || "").trim() || DEFAULT_SETTINGS[k]); store.set("agent", settings); view = "chat"; renderPanel(); };
+    const saveSettings = e => { e.preventDefault(); const fd = new FormData(f); Object.keys(DEFAULT_SETTINGS).forEach(k => settings[k] = k === "viaBot" ? (fd.get("viaBot") ? "1" : "") : String(fd.get(k) || "").trim() || DEFAULT_SETTINGS[k]); store.set("agent", settings); view = "chat"; renderPanel(); };
     f.addEventListener("submit", saveSettings); f.querySelector('[type="submit"]').addEventListener("click", saveSettings);
   } else {
-    const need = !settings.orKey && !settings.groqKey;
+    const need = !hasKey();
     root.innerHTML = head + `<div class="ag-thread" id="ag-thread">
         ${!thread.length ? `<p class="ag-lead muted">${T("ag.lead")}</p>` : ""}
         ${thread.map(renderEntry).join("")}
@@ -375,5 +397,6 @@ async function send() {
   }
 }
 
-window.AGENT = { open, toggle, isOpen, askWith, errorText, hasKey: () => !!(settings.orKey || settings.groqKey), _test: { parseAnswer, problems, SCHEMA, context } };
+function hasKey() { return !!((settings.viaBot && cfg.token) || settings.orKey || settings.groqKey); }
+window.AGENT = { open, toggle, isOpen, askWith, errorText, hasKey, _test: { parseAnswer, problems, SCHEMA, context } };
 })();
