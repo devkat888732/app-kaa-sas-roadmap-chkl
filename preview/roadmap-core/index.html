@@ -126,6 +126,19 @@ h2 { font-family: var(--font-display); font-size: 19px; margin: 0; }
 .preview-banner { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 25; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   font-size: 13px; text-align: center; color: var(--fg); background: color-mix(in srgb, var(--review) 22%, var(--bg)); border-bottom: 1px solid color-mix(in srgb, var(--review) 45%, transparent); }
 .preview-banner[hidden] { display: none; }
+/* «review first» banner, from roadmap/review-focus__ai.yaml */
+.focus-banner { margin: 0; padding: 10px max(16px, env(safe-area-inset-left, 0px)); font-size: 14px; color: var(--fg);
+  background: color-mix(in srgb, var(--blocked) 16%, var(--bg)); border-bottom: 1px solid color-mix(in srgb, var(--blocked) 40%, transparent); }
+.focus-banner[hidden] { display: none; }
+.focus-banner details { max-width: 1100px; margin: 0 auto; }
+.focus-banner summary { cursor: pointer; display: flex; gap: 10px; align-items: center; list-style: none; }
+.focus-banner summary::-webkit-details-marker { display: none; }
+.focus-banner summary b { font-weight: 600; }
+.focus-banner .fx { margin-left: auto; border: 0; background: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
+.focus-banner h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 12px 0 6px; }
+.focus-banner ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.focus-banner a { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; }
+.focus-banner .why { display: block; color: var(--muted); font-size: 13px; }
 header > .side { position: relative; }
 .pv-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: min(360px, calc(100vw - 32px)); display: grid; gap: 10px; padding: 14px;
   border-radius: var(--radius); background: var(--glass-strong); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, .18);
@@ -296,6 +309,7 @@ tbody tr:last-child td { border-bottom: 0; }
 </head>
 <body>
 <div class="preview-banner" id="preview-banner" data-fb="preview-banner" hidden></div>
+<div class="focus-banner" id="focus-banner" data-fb="focus-banner" hidden></div>
 <div class="wrap">
   <header data-fb="header">
     <div>
@@ -303,6 +317,7 @@ tbody tr:last-child td { border-bottom: 0; }
       <h1 data-fb="title">SAS kaa <span>Roadmap</span></h1>
     </div>
     <div class="side">
+      <button class="btn ghost" type="button" id="focus-show" data-fb="focus-show" hidden></button>
       <div class="meta" id="meta" data-fb="toolbar"></div>
       <div class="pv-pop" id="pv-pop" data-fb="previews-menu" role="dialog" aria-labelledby="pv-title" hidden></div>
       <label class="skin" for="lang" data-fb="language"><span id="lang-label">Language</span>
@@ -328,7 +343,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "build": "d4a2569", "preview": "roadmap-core"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "build": "99362ac", "preview": "roadmap-core"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -399,6 +414,7 @@ const I18N = {
     "noMacros": "No macros documented yet. Each folder in <code>macros/&lt;name&gt;/</code> appears here with its pipeline: schema → card → diagram → reviewed by a human. Stages are read from the files in the repo.",
     "macro": "Macro", "schema": "Schema", "card": "Card", "diagram": "Diagram", "reviewed": "Reviewed", "stageDone": "done", "stageMissing": "missing",
     "allReviewed": "Every AI-generated file has been reviewed.",
+    "focus.title": "Review first", "focus.count": (f, b) => `${f} files, ${b} branches`, "focus.files": "Files", "focus.branches": "Branches (PRs)", "focus.hide": "Hide until the list changes (🔥 at the top brings it back)", "focus.show": "show",
     "reviewNote": mark => `AI-generated files still marked <code>${mark}</code>. After reviewing a file, change its mark to “reviewed by a human, YYYY-MM-DD”; it leaves this list on the next refresh.`,
     "file": "File", "folder": "Folder", "root": "root", "noCommits": "No commits found.",
     "saving": "Saving to GitHub…", "retry": "Retry", "pending": n => `${n} change${n > 1 ? "s" : ""} · saving in a moment`, "saveNow": "Save now", "savedCommit": "Saved · commit",
@@ -460,6 +476,7 @@ const I18N = {
     "noMacros": "Пока нет описанных макросов. Каждая папка <code>macros/&lt;имя&gt;/</code> появится здесь со своим конвейером: схема → карточка → диаграмма → проверено человеком. Этапы определяются по файлам в репозитории.",
     "macro": "Макрос", "schema": "Схема", "card": "Карточка", "diagram": "Диаграмма", "reviewed": "Проверено", "stageDone": "есть", "stageMissing": "нет",
     "allReviewed": "Все файлы, созданные ИИ, проверены.",
+    "focus.title": "На ревью в первую очередь", "focus.count": (f, b) => `${f} ${plural(f, "файл", "файла", "файлов")}, ${b} ${plural(b, "ветка", "ветки", "веток")}`, "focus.files": "Файлы", "focus.branches": "Ветки (PR)", "focus.hide": "Скрыть, пока список не поменяется (вернуть — 🔥 вверху)", "focus.show": "показать",
     "reviewNote": mark => `Файлы, созданные ИИ, у которых ещё стоит пометка <code>${mark}</code>. После проверки замените пометку на «reviewed by a human, ГГГГ-ММ-ДД» — при следующем обновлении файл уйдёт из списка.`,
     "file": "Файл", "folder": "Папка", "root": "корень", "noCommits": "Коммитов не найдено.",
     "saving": "Сохраняю в GitHub…", "retry": "Повторить", "pending": n => `${n} ${plural(n, "изменение", "изменения", "изменений")} · сохраню через мгновение`, "saveNow": "Сохранить сейчас", "savedCommit": "Сохранено · коммит",
@@ -503,6 +520,7 @@ const cfg = Object.assign({}, DEFAULTS, store.get(CFG_KEY, {}), { token: store.g
 function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); } catch { return null; } }
 const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false, rm: false }, store.get("ui", {}));
 if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
+let reviewFocus = null;   // roadmap/review-focus__ai.yaml: { updated, files, branches }
 let doc = null, header = "", fileSha = null, tree = [], treeTruncated = false, commits = [], contents = {}, derived = {};
 let pending = [], saveTimer = null, savebarTimer = null, saving = false, lastSave = null, saveError = null, openEditor = null, loadError = null, loading = false;
 
@@ -516,7 +534,7 @@ function applySkin(k) {
 applySkin(store.get("skin", null));
 $("skin").onchange = e => { const k = e.target.value || null; store.set("skin", k); applySkin(k); };
 applyLangStatic();
-$("lang").onchange = e => { lang = LANGS.includes(e.target.value) ? e.target.value : "en"; store.set("lang", lang); applyLangStatic(); derive(); render(); renderPreviews(); };
+$("lang").onchange = e => { lang = LANGS.includes(e.target.value) ? e.target.value : "en"; store.set("lang", lang); applyLangStatic(); derive(); render(); renderPreviews(); renderFocusBanner(); };
 
 /* ---------- GitHub API ---------- */
 async function gh(path, { method = "GET", body, raw = false } = {}) {
@@ -616,8 +634,45 @@ async function pool(items, n, fn) {
   await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k]); } }));
   return out;
 }
+/* ---------- «review first» banner ---------- */
+const FOCUS_PATH = "roadmap/review-focus__ai.yaml";
+async function loadFocus() {
+  try {
+    const f = await gh(`${repoPath()}/contents/${FOCUS_PATH}?ref=${encodeURIComponent(cfg.branch)}`);
+    const d = jsyaml.load(b64decode(f.content), YAML_OPTS) || {};
+    reviewFocus = { updated: String(d.updated || ""), files: Array.isArray(d.files) ? d.files : [], branches: Array.isArray(d.branches) ? d.branches : [] };
+  } catch { reviewFocus = null; }
+  renderFocusBanner();
+}
+const ghBlob = (repo, branch, path) => `https://github.com/${repo}/blob/${encodeURIComponent(branch || "main")}/${path}`;
+const ghPr = (repo, n) => `https://github.com/${repo}/pull/${n}`;
+function renderFocusBanner() {
+  const el = $("focus-banner");
+  const f = reviewFocus, n = f ? f.files.length + f.branches.length : 0;
+  const show = $("focus-show");
+  const hidden = n && store.get("focusHidden", "") === f.updated;
+  show.hidden = !hidden;
+  if (hidden) {
+    show.textContent = `🔥 ${n}`;
+    show.title = `${T("focus.title")} — ${T("focus.show")}`; show.setAttribute("aria-label", show.title);
+    show.onclick = () => { store.set("focusHidden", ""); store.set("focusOpen", true); renderFocusBanner(); };
+  }
+  if (!n || hidden) { el.hidden = true; return; }
+  const repoName = r => String(r || "").split("/").pop();
+  el.hidden = false;
+  el.innerHTML = `<details${store.get("focusOpen", false) ? " open" : ""}><summary>🔥 <span>${T("focus.title")}: <b>${T("focus.count", f.files.length, f.branches.length)}</b></span>
+    <button class="fx" type="button" data-fx aria-label="${esc(T("focus.hide"))}" title="${esc(T("focus.hide"))}">✕</button></summary>
+    ${f.files.length ? `<h3>${T("focus.files")}</h3><ol>${f.files.map(x => `<li><a href="${esc(ghBlob(x.repo, x.branch, x.path))}" target="_blank" rel="noopener">${esc(repoName(x.repo))}/${esc(x.path)}</a>${x.branch && x.branch !== "main" ? ` <span class="muted">(${esc(x.branch)})</span>` : ""}<span class="why">${esc(x.why || "")}</span></li>`).join("")}</ol>` : ""}
+    ${f.branches.length ? `<h3>${T("focus.branches")}</h3><ol>${f.branches.map(x => `<li><a href="${esc(x.pr ? ghPr(x.repo, x.pr) : `https://github.com/${x.repo}/tree/${encodeURIComponent(x.branch)}`)}" target="_blank" rel="noopener">${esc(repoName(x.repo))} · ${esc(x.branch)}${x.pr ? ` · PR #${esc(x.pr)}` : ""}</a><span class="why">${esc(x.why || "")}</span></li>`).join("")}</ol>` : ""}
+  </details>`;
+  const d = el.querySelector("details");
+  d.addEventListener("toggle", () => store.set("focusOpen", d.open));
+  el.querySelector("[data-fx]").onclick = e => { e.preventDefault(); store.set("focusHidden", f.updated); renderFocusBanner(); };
+}
+
 async function load() {
   if (!cfg.token) { render(); return; }
+  loadFocus();
   if (saving) { setTimeout(load, 400); return; }
   if (pending.length) { clearTimeout(saveTimer); await save(); if (pending.length) return; }
   loading = true; loadError = null; render();
