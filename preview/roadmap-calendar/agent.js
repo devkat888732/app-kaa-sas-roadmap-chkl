@@ -10,7 +10,7 @@
  *
  * Relies on the host page's globals: DEFAULTS, cfg, doc, ui, lang, I18N, T, $, esc, store, gh, repoPath, b64decode, b64encode,
  * splitHeader, YAML_OPTS, jsyaml, AREAS, STATUS, PRIORITIES, effStatus, edit, today, nextId, clean, fbA, renderConnect; window.FB, window.IDEAS, window.CAL.
- * Exposes window.AGENT = { open, toggle, isOpen }.
+ * Exposes window.AGENT = { open, toggle, isOpen, askWith, errorText, hasKey }.
  */
 (() => {
 "use strict";
@@ -129,23 +129,31 @@ async function post(url, key, body, extra) {
 }
 const parseAnswer = C.parseAgentAnswer;
 async function ask(text) {
-  const msgs = await messages(text);
+  const r = await askWith(await messages(text), { schema: { name: "roadmap_proposals", schema: SCHEMA }, parse: parseAnswer });
+  return { data: r.result, model: r.model };
+}
+/* any answer: { schema: { name, schema } (strict, optional), parse(content) → result (throws → next model), onAttempt(n, total, label) }
+ * → { result, model }. Used by the agent and by «🔄 Пересобрать» of the review-first banner. */
+async function askWith(msgs, { schema, parse, onAttempt } = {}) {
   const attempts = [];
   const orHeaders = { "HTTP-Referer": location.origin + location.pathname, "X-Title": "SAS kaa Roadmap" };
   const fallbacks = settings.fallbacks.split(",").map(s => s.trim()).filter(Boolean);
   const orBody = extra => ({ ...(fallbacks.length ? { models: [settings.model, ...fallbacks] } : { model: settings.model }), messages: msgs, temperature: 0.2, ...extra });
   if (settings.orKey) {
-    attempts.push(() => post("https://openrouter.ai/api/v1/chat/completions", settings.orKey,
-      orBody({ response_format: { type: "json_schema", json_schema: { name: "roadmap_proposals", strict: true, schema: SCHEMA } }, provider: { require_parameters: true } }), orHeaders));
-    attempts.push(() => post("https://openrouter.ai/api/v1/chat/completions", settings.orKey, orBody({ response_format: { type: "json_object" } }), orHeaders));
+    if (schema) attempts.push(["OpenRouter", () => post("https://openrouter.ai/api/v1/chat/completions", settings.orKey,
+      orBody({ response_format: { type: "json_schema", json_schema: { name: schema.name, strict: true, schema: schema.schema } }, provider: { require_parameters: true } }), orHeaders)]);
+    attempts.push(["OpenRouter", () => post("https://openrouter.ai/api/v1/chat/completions", settings.orKey, orBody({ response_format: { type: "json_object" } }), orHeaders)]);
   }
-  if (settings.groqKey) attempts.push(() => post("https://api.groq.com/openai/v1/chat/completions", settings.groqKey,
-    { model: settings.groqModel, messages: msgs, temperature: 0.2, response_format: { type: "json_object" } }));
+  if (settings.groqKey) attempts.push(["Groq", () => post("https://api.groq.com/openai/v1/chat/completions", settings.groqKey,
+    { model: settings.groqModel, messages: msgs, temperature: 0.2, response_format: { type: "json_object" } })]);
+  if (!attempts.length) { const e = new Error(T("ag.needKey")); e.status = 401; throw e; }
   let last = null;
-  for (const attempt of attempts) {
+  for (const [k, [label, attempt]] of attempts.entries()) {
+    if (onAttempt) onAttempt(k + 1, attempts.length, label);
     try {
       const r = await attempt();
-      return { data: parseAnswer(r.content), model: r.model };
+      try { return { result: parse ? parse(r.content) : r.content, model: r.model }; }
+      catch { const e = new Error("format"); e.kind = "format"; throw e; }
     } catch (e) {
       last = e;
       if (e.status === 401 || e.status === 403) break;   // a wrong key won't get better on the next attempt with the same key
@@ -367,5 +375,5 @@ async function send() {
   }
 }
 
-window.AGENT = { open, toggle, isOpen, _test: { parseAnswer, problems, SCHEMA, context } };
+window.AGENT = { open, toggle, isOpen, askWith, errorText, hasKey: () => !!(settings.orKey || settings.groqKey), _test: { parseAnswer, problems, SCHEMA, context } };
 })();

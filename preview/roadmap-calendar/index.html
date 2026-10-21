@@ -16,6 +16,7 @@
 <script src="core/feedback.js"></script>
 <script src="core/ideas.js"></script>
 <script src="core/calendar.js"></script>
+<script src="core/focus.js"></script>
 <script src="core/agent.js"></script>
 <!-- report widget (bugs / updates) and the feedback view: self-contained, see roadmap/FEEDBACK__ai.md -->
 <link rel="stylesheet" href="feedback.css">
@@ -116,7 +117,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
 .btn.ghost { border-color: transparent; background: none; color: var(--accent); padding-inline: 6px; }
 .btn.danger { color: var(--blocked); }
-input[type="text"], input[type="password"], input[type="date"], input[type="search"], select, textarea {
+input[type="text"], input[type="password"], input[type="date"], input[type="search"], input[type="number"], input[type="time"], select, textarea {
   background: var(--glass-strong); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; min-width: 0; width: 100%; }
 select option { background: var(--surface); }
 textarea { resize: vertical; min-height: 64px; }
@@ -141,6 +142,19 @@ h2 { font-family: var(--font-display); font-size: 19px; margin: 0; }
 .focus-banner ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
 .focus-banner a { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; }
 .focus-banner .why { display: block; color: var(--muted); font-size: 13px; }
+.focus-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: flex-end; margin-top: 12px; font-size: 13px; }
+.fr-form h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 10px 0 4px; }
+.fr-form .fr-h { color: var(--fg); font-size: 14px; letter-spacing: 0; text-transform: none; margin: 14px 0 0; }
+.fr-form ol, .fr-form ul { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.fr-form a { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; }
+.fr-form .why { display: block; color: var(--muted); font-size: 13px; }
+fieldset.fr-set { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.fr-set legend { padding: 0; margin-bottom: 4px; }
+.fr-chk { display: inline-flex; gap: 6px; align-items: center; color: var(--fg); }
+.fr-pins { list-style: none; padding-left: 0 !important; }
+.fr-pins li.move b { color: var(--review); }
+.fr-summary { margin: 0; }
+.fr-progress { margin: 0; color: var(--muted); }
 header > .side { position: relative; }
 .pv-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: min(360px, calc(100vw - 32px)); display: grid; gap: 10px; padding: 14px;
   border-radius: var(--radius); background: var(--glass-strong); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, .18);
@@ -345,7 +359,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "26c0a13", "preview": "roadmap-calendar"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "d8bc22d", "preview": "roadmap-calendar"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -643,9 +657,8 @@ const FOCUS_PATH = "roadmap/review-focus__ai.yaml";
 async function loadFocus() {
   try {
     const f = await gh(`${repoPath()}/contents/${FOCUS_PATH}?ref=${encodeURIComponent(cfg.branch)}`);
-    const d = jsyaml.load(b64decode(f.content), YAML_OPTS) || {};
-    reviewFocus = { updated: String(d.updated || ""), files: Array.isArray(d.files) ? d.files : [], branches: Array.isArray(d.branches) ? d.branches : [] };
-  } catch { reviewFocus = null; }
+    reviewFocus = RoadmapCore.parseFocus(b64decode(f.content));
+  } catch (e) { reviewFocus = e && e.status === 404 ? { updated: "", files: [], branches: [], settings: null } : null; }
   renderFocusBanner();
 }
 const ghBlob = (repo, branch, path) => `https://github.com/${repo}/blob/${encodeURIComponent(branch || "main")}/${path}`;
@@ -661,6 +674,11 @@ function renderFocusBanner() {
     show.title = `${T("focus.title")} — ${T("focus.show")}`; show.setAttribute("aria-label", show.title);
     show.onclick = () => { store.set("focusHidden", ""); store.set("focusOpen", true); renderFocusBanner(); };
   }
+  // an empty list: the 🔥 button builds one
+  if (!n && f && window.FOCUSUI) {
+    show.hidden = false; show.textContent = "🔥 +"; show.title = T("fr.title"); show.setAttribute("aria-label", show.title);
+    show.onclick = () => FOCUSUI.open();
+  }
   if (!n || hidden) { el.hidden = true; return; }
   const repoName = r => String(r || "").split("/").pop();
   el.hidden = false;
@@ -668,10 +686,13 @@ function renderFocusBanner() {
     <button class="fx" type="button" data-fx aria-label="${esc(T("focus.hide"))}" title="${esc(T("focus.hide"))}">✕</button></summary>
     ${f.files.length ? `<h3>${T("focus.files")}</h3><ol>${f.files.map(x => `<li><a href="${esc(ghBlob(x.repo, x.branch, x.path))}" target="_blank" rel="noopener">${esc(repoName(x.repo))}/${esc(x.path)}</a>${x.branch && x.branch !== "main" ? ` <span class="muted">(${esc(x.branch)})</span>` : ""}<span class="why">${esc(x.why || "")}</span></li>`).join("")}</ol>` : ""}
     ${f.branches.length ? `<h3>${T("focus.branches")}</h3><ol>${f.branches.map(x => `<li><a href="${esc(x.pr ? ghPr(x.repo, x.pr) : `https://github.com/${x.repo}/tree/${encodeURIComponent(x.branch)}`)}" target="_blank" rel="noopener">${esc(repoName(x.repo))} · ${esc(x.branch)}${x.pr ? ` · PR #${esc(x.pr)}` : ""}</a><span class="why">${esc(x.why || "")}</span></li>`).join("")}</ol>` : ""}
+    ${window.FOCUSUI ? `<div class="focus-actions">${f.settings ? `<span class="muted">${esc(RoadmapCore.focusSettingsText({ ...f.settings, pins: "" }))}${f.settings.priorities ? ` · «${esc(f.settings.priorities)}»` : ""}</span>` : ""}<button class="btn" type="button" data-focus-rebuild>${T("fr.btn")}</button></div>` : ""}
   </details>`;
   const d = el.querySelector("details");
   d.addEventListener("toggle", () => store.set("focusOpen", d.open));
   el.querySelector("[data-fx]").onclick = e => { e.preventDefault(); store.set("focusHidden", f.updated); renderFocusBanner(); };
+  const rb = el.querySelector("[data-focus-rebuild]");
+  if (rb) rb.onclick = () => FOCUSUI.open();
 }
 
 async function load() {
@@ -1211,7 +1232,7 @@ function showCrash(msg) {
   $("main").prepend(box);
 }
 // only this page's own scripts may raise the crash banner; errors from browser extensions or a host frame's injected code are ignored
-const ownScript = f => !f || f.split("#")[0] === location.href.split("#")[0] || /\/(js-yaml\.min|feedback|agent|ideas|calendar|core\/[a-z]+)\.js$/.test(f);
+const ownScript = f => !f || f.split("#")[0] === location.href.split("#")[0] || /\/(js-yaml\.min|feedback|agent|ideas|calendar|focus-ui|core\/[a-z]+)\.js$/.test(f);
 window.addEventListener("error", e => { if (ownScript(e.filename)) showCrash(e.message || "script error"); });
 window.addEventListener("unhandledrejection", e => showCrash(e.reason && e.reason.message || String(e.reason)));
 
@@ -1226,5 +1247,6 @@ if (typeof jsyaml === "undefined" || !window.RoadmapCore || !RoadmapCore.parseTa
 <script src="ideas.js"></script>
 <script src="calendar.js"></script>
 <script src="agent.js"></script>
+<script src="focus-ui.js"></script>
 </body>
 </html>
