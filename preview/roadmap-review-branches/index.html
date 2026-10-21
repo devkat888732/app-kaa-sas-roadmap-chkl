@@ -1,0 +1,1100 @@
+<!doctype html>
+<!-- AI-generated (Claude) · 2026-10-13, restyled 2026-10-14 · not reviewed by a human -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SAS kaa Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!-- js-yaml 4.1.0 is bundled next to the page (cdnjs is behind Cloudflare, which is throttled in Russia). -->
+<script src="js-yaml.min.js"></script>
+<script>/* apply the saved theme before first paint */ try { const k = JSON.parse(localStorage.getItem("roadmap:skin") || "null"); if (k) document.documentElement.setAttribute("data-skin", k); } catch (e) {}</script>
+<style>
+/* Look: matte — muted, low-saturation colours. Four themes, chosen per device in the header:
+   Stone and Slate (light, soft frosted panels on a tinted ground), Teal night (the original dark theme) and Ink (muted dark blue).
+   "System" (no data-skin attribute) follows the OS: Stone by day, Teal night by night.
+   The :has(#skin …) selectors make the select itself drive the theme too, in case a host frame rewrites attributes on <html>. */
+/* Layout: one working column — summary, then tabs (Checklist / Macros / Review / Activity); checklist grouped by milestone with inline editors; save status pinned to the bottom. */
+:root {
+  --bg: #d8d4cd; --surface: #efece7; --glass: rgba(240, 237, 232, .62); --glass-strong: rgba(245, 243, 239, .86);
+  --field: radial-gradient(42vmax 36vmax at 8% 4%, rgba(47, 102, 104, .16), transparent 70%),
+           radial-gradient(38vmax 34vmax at 96% 18%, rgba(79, 111, 156, .10), transparent 70%),
+           radial-gradient(44vmax 38vmax at 70% 104%, rgba(154, 107, 51, .08), transparent 70%);
+  --glass-shadow: 0 10px 30px rgba(23, 50, 52, .08), 0 1px 2px rgba(23, 50, 52, .05);
+  --fg: #172426; --muted: #5b6d70; --sunken: rgba(23, 36, 38, .06); --line: rgba(23, 36, 38, .12); --glass-edge: rgba(255, 255, 255, .38);
+  --accent: #2f6668; --accent-soft: #dde9e9; --todo: #7d8a8c; --doing: #4f6f9c; --review: #9a6b33; --done: #4a7a5a; --blocked: #a8534d;
+  --grain-opacity: .05; color-scheme: light;
+  --glass-blur: blur(22px) saturate(150%);
+  --font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-skin]):not(:has(#skin option:checked:not([value=""]))) {
+  --bg: #0e1617; --surface: #152022; --sunken: #1b2a2c; --line: #2a3b3e; --fg: #e3ecec; --muted: #94a8ab;
+  --glass: #152022; --glass-strong: #1b2a2c; --glass-edge: #2a3b3e; --glass-shadow: none; --field: none; --grain-opacity: 0;
+  --accent: #4fc1c4; --accent-soft: #173638; --todo: #8a9a9d; --doing: #6ea3f2; --review: #e0a24c; --done: #5cc483; --blocked: #ef7676;
+  color-scheme: dark;
+  }
+}
+:root[data-skin="stone"], :root:has(#skin option[value="stone"]:checked) {
+  --bg: #d8d4cd; --surface: #efece7; --glass: rgba(240, 237, 232, .62); --glass-strong: rgba(245, 243, 239, .86);
+  --field: radial-gradient(42vmax 36vmax at 8% 4%, rgba(47, 102, 104, .16), transparent 70%),
+           radial-gradient(38vmax 34vmax at 96% 18%, rgba(79, 111, 156, .10), transparent 70%),
+           radial-gradient(44vmax 38vmax at 70% 104%, rgba(154, 107, 51, .08), transparent 70%);
+  --glass-shadow: 0 10px 30px rgba(23, 50, 52, .08), 0 1px 2px rgba(23, 50, 52, .05);
+  --fg: #172426; --muted: #5b6d70; --sunken: rgba(23, 36, 38, .06); --line: rgba(23, 36, 38, .12); --glass-edge: rgba(255, 255, 255, .38);
+  --accent: #2f6668; --accent-soft: #dde9e9; --todo: #7d8a8c; --doing: #4f6f9c; --review: #9a6b33; --done: #4a7a5a; --blocked: #a8534d;
+  --grain-opacity: .05; color-scheme: light;
+}
+:root[data-skin="slate"], :root:has(#skin option[value="slate"]:checked) {
+  --bg: #cdd6de; --surface: #ebeff3; --glass: rgba(233, 238, 243, .62); --glass-strong: rgba(241, 244, 247, .86);
+  --field: radial-gradient(42vmax 36vmax at 8% 4%, rgba(47, 102, 104, .16), transparent 70%),
+           radial-gradient(38vmax 34vmax at 96% 18%, rgba(79, 111, 156, .10), transparent 70%),
+           radial-gradient(44vmax 38vmax at 70% 104%, rgba(154, 107, 51, .08), transparent 70%);
+  --glass-shadow: 0 10px 30px rgba(23, 50, 52, .08), 0 1px 2px rgba(23, 50, 52, .05);
+  --fg: #172426; --muted: #5b6d70; --sunken: rgba(23, 36, 38, .06); --line: rgba(23, 36, 38, .12); --glass-edge: rgba(255, 255, 255, .38);
+  --accent: #2f6668; --accent-soft: #dde9e9; --todo: #7d8a8c; --doing: #4f6f9c; --review: #9a6b33; --done: #4a7a5a; --blocked: #a8534d;
+  --grain-opacity: .05; color-scheme: light;
+}
+:root[data-skin="teal"], :root:has(#skin option[value="teal"]:checked) {
+  --bg: #0e1617; --surface: #152022; --sunken: #1b2a2c; --line: #2a3b3e; --fg: #e3ecec; --muted: #94a8ab;
+  --glass: #152022; --glass-strong: #1b2a2c; --glass-edge: #2a3b3e; --glass-shadow: none; --field: none; --grain-opacity: 0;
+  --accent: #4fc1c4; --accent-soft: #173638; --todo: #8a9a9d; --doing: #6ea3f2; --review: #e0a24c; --done: #5cc483; --blocked: #ef7676;
+  color-scheme: dark;
+}
+:root[data-skin="ink"], :root:has(#skin option[value="ink"]:checked) {
+  --bg: #0d111b; --surface: #151a27; --sunken: #1b2131; --line: #262d40; --fg: #dde2ec; --muted: #8b93a7;
+  --glass: #151a27; --glass-strong: #1c2232; --glass-edge: #262d40; --glass-shadow: none; --field: none; --grain-opacity: .02;
+  --accent: #93a6cc; --accent-soft: #1e2639; --todo: #7e8698; --doing: #8ea3cf; --review: #c3a06e; --done: #87a991; --blocked: #c88580;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+html, body { background: var(--bg); }
+/* isolation keeps the colour field (z-index: -1) above body's own background */
+body { color: var(--fg); font: 15px/1.5 var(--font-body); min-height: 100vh; isolation: isolate; }
+/* colour field under the glass (a fixed layer, because iOS ignores background-attachment: fixed) */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: var(--field); pointer-events: none; }
+/* matte grain over everything */
+body::after { content: ""; position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+/* frosted surfaces */
+.glass, .panel, .group, .table-wrap, .feed, .tabs {
+  background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass: color-mix(in srgb, var(--surface) 90%, transparent); }
+}
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 96px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+#main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.btn { border: 1px solid var(--line); background: var(--glass-strong); border-radius: 10px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+.btn.ghost { border-color: transparent; background: none; color: var(--accent); padding-inline: 6px; }
+.btn.danger { color: var(--blocked); }
+input[type="text"], input[type="password"], input[type="date"], input[type="search"], select, textarea {
+  background: var(--glass-strong); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; min-width: 0; width: 100%; }
+select option { background: var(--surface); }
+textarea { resize: vertical; min-height: 64px; }
+
+header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+h1 { font-family: var(--font-display); font-size: clamp(26px, 4vw, 36px); line-height: 1.1; margin: 0; letter-spacing: -.01em; }
+h1 span { color: var(--accent); }
+h2 { font-family: var(--font-display); font-size: 19px; margin: 0; }
+.preview-banner { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 25; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  font-size: 13px; text-align: center; color: var(--fg); background: color-mix(in srgb, var(--review) 22%, var(--bg)); border-bottom: 1px solid color-mix(in srgb, var(--review) 45%, transparent); }
+.preview-banner[hidden] { display: none; }
+.rv-branch { font-size: 15px; font-weight: 600; margin: 22px 0 8px; }
+header > .side { position: relative; }
+.pv-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: min(360px, calc(100vw - 32px)); display: grid; gap: 10px; padding: 14px;
+  border-radius: var(--radius); background: var(--glass-strong); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, .18);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+.pv-pop[hidden] { display: none; }
+.pv-pop h2 { font-size: 15px; }
+.pv-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.pv-list a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: var(--fg); }
+.pv-list a:hover, .pv-list a:focus-visible { background: var(--sunken); }
+.pv-list .name { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; }
+.pv-list .when { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.pv-list .note2 { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.pv-list .here { color: var(--accent); font-weight: 600; }
+.pv-foot { font-size: 12px; color: var(--muted); margin: 0; }
+.preview-banner b { font-family: var(--font-mono); font-weight: 500; }
+.side { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: flex-end; }
+.skin { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.skin select { width: auto; padding: 4px 8px; font-size: 13px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: var(--muted); align-items: center; }
+
+.panel { border-radius: var(--radius); padding: 18px; min-width: 0; }
+.summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px; }
+.big { font-family: var(--font-display); font-size: 42px; line-height: 1; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: var(--sunken); border-radius: 99px; overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; }
+.counts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.count { display: grid; gap: 2px; align-content: start; padding: 10px 12px; border-radius: 10px; background: var(--sunken); border: 1px solid transparent; cursor: pointer; text-align: left; }
+.count:hover, .count[aria-pressed="true"] { border-color: var(--accent); }
+.count b { font-size: 22px; font-variant-numeric: tabular-nums; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+/* the status dot sits by the number, so the whole card width is left for the label (longest: "Заблокировано") */
+.count span { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; overflow-x: auto; }
+.tab { border: 0; background: none; padding: 8px 14px; cursor: pointer; color: var(--muted); border-radius: 9px; white-space: nowrap; font-weight: 500; }
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { color: var(--fg); background: var(--glass-strong); box-shadow: 0 1px 3px rgba(0, 0, 0, .08), inset 0 0 0 1px var(--line); }
+.tab small { font-family: var(--font-mono); margin-left: 4px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-block: 14px; }
+.filters input[type="search"] { flex: 1 1 220px; width: auto; }
+.filters select { width: auto; }
+.toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: var(--muted); cursor: pointer; }
+
+/* checklist */
+.group { display: grid; gap: 0; margin-bottom: 18px; border-radius: var(--radius); overflow: hidden; }
+.group-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 14px 16px 12px; border-bottom: 1px solid var(--line); background: transparent; }
+.group-head h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.group-head p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.group-head .side { display: grid; gap: 6px; justify-items: end; font-size: 12px; color: var(--muted); }
+.group-head .bar { grid-column: 1 / -1; }
+.late { color: var(--blocked); font-weight: 500; }
+.row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.row:hover { background: var(--sunken); }
+.row.is-done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+.row input[type="checkbox"] { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--done); cursor: pointer; }
+.title { background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font-weight: 500; line-height: 1.4; }
+.title:hover { color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; margin-top: 4px; }
+.chip { padding: 1px 8px; border-radius: 99px; background: var(--sunken); color: var(--muted); white-space: nowrap; }
+.chip.owner-ai { background: var(--accent-soft); color: var(--accent); }
+.chip.pri-high { color: var(--blocked); background: transparent; border: 1px solid currentColor; }
+.chip.auto { background: var(--accent-soft); color: var(--accent); }
+.id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.status-sel { width: auto; font-size: 13px; padding: 3px 8px; border-radius: 99px; }
+.add-row { padding: 8px 12px; }
+.empty { color: var(--muted); font-size: 14px; padding: 12px 16px; }
+
+.editor { grid-column: 2 / -1; display: grid; gap: 10px; padding: 12px; margin-top: 8px; background: var(--sunken); border: 1px solid var(--line); border-radius: 10px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.field > span { font-weight: 500; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.history { font-size: 13px; }
+.history ul { margin: 4px 0 0; padding-left: 18px; }
+
+.table-wrap { overflow-x: auto; border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+.stage { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+.stage.on { background: var(--done); color: var(--surface); }
+.stage.off { background: var(--sunken); color: var(--muted); }
+.note { background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border: 1px dashed var(--line); border-radius: var(--radius); padding: 16px; color: var(--muted); font-size: 14px; }
+.note code, .connect code { font-family: var(--font-mono); font-size: 13px; color: var(--fg); }
+.feed { border-radius: var(--radius); }
+.feed > div { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); align-items: baseline; }
+.feed > div:last-child { border-bottom: 0; }
+.feed .subj { overflow-wrap: anywhere; }
+
+.connect { max-width: 560px; display: grid; gap: 14px; }
+.connect ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.error { background: color-mix(in srgb, var(--blocked) 12%, var(--surface)); color: var(--blocked); border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+
+.savebar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); z-index: 20;
+  display: flex; gap: 12px; align-items: center; background: color-mix(in srgb, var(--fg) 80%, transparent); color: var(--bg); border-radius: 99px; padding: 8px 10px 8px 16px; font-size: 14px; max-width: calc(100% - 32px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.2); border: 1px solid color-mix(in srgb, var(--bg) 18%, transparent); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+.savebar[hidden] { display: none; }
+.savebar .btn { background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 40%, transparent); padding: 4px 10px; }
+.savebar a { color: var(--bg); }
+
+/* below this width the counts get the full row, so five labels fit side by side */
+@media (max-width: 960px) {
+  .summary { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  /* phones: statuses as a compact list, label on the left, dot and number on the right */
+  .counts { grid-template-columns: 1fr; gap: 4px; }
+  .count { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; padding: 7px 12px; }
+  .count b { font-size: 17px; }
+  .count span { font-size: 13px; }
+  .side { justify-content: flex-start; }
+  .pv-pop { left: 0; right: auto; }
+  .summary { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 28px minmax(0, 1fr); }
+  .row .right { grid-column: 2; }
+  .feed > div { grid-template-columns: 1fr; gap: 2px; }
+}
+@media (prefers-reduced-motion: no-preference) { .bar i { transition: width .35s ease; } }
+</style>
+</head>
+<body>
+<div class="preview-banner" id="preview-banner" hidden></div>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="label" id="repo-label">kaa_sas_knwbase</div>
+      <h1>SAS kaa <span>Roadmap</span></h1>
+    </div>
+    <div class="side">
+      <div class="meta" id="meta"></div>
+      <div class="pv-pop" id="pv-pop" role="dialog" aria-labelledby="pv-title" hidden></div>
+      <label class="skin" for="lang"><span id="lang-label">Language</span>
+        <select id="lang">
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+        </select>
+      </label>
+      <label class="skin" for="skin"><span id="skin-label">Theme</span>
+        <select id="skin">
+          <option value="">System</option>
+          <option value="stone">Stone · light</option>
+          <option value="slate">Slate · light</option>
+          <option value="teal">Teal night · dark</option>
+          <option value="ink">Ink · dark</option>
+        </select>
+      </label>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+<div class="savebar" id="savebar" hidden></div>
+
+<script>
+/* Build-time defaults (replaced by build.py). */
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "preview": "roadmap-review-branches"};
+const TASKS_PATH = "roadmap/tasks__ai.yaml";
+// labels are getters so they follow the current language
+const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
+const STATUS_LABEL = Object.fromEntries(STATUS.map(s => [s.key, true]));
+const AREAS = ["macros", "blog", "infra", "docs", "research"];
+const OWNERS = { get kaa() { return T("owner.kaa"); }, get ai() { return T("owner.ai"); } };
+const PRIORITIES = ["high", "normal", "low"];
+const AI_MARK = "not reviewed by a human";
+const SCAN_EXT = /\.(md|json|yaml|yml|py|html|svg)$/i;
+const SKIP = /^(\.github\/|roadmap\/_site\/)/;
+const HEAD_LEN = 600;   // AI marks and reviewedByHuman sit at the top of a file
+const ID_RE = /\bT-\d{3,}\b/g;
+const CLOSE_RE = /\b(?:close[sd]?|fix(?:e[sd])?|done|resolve[sd]?)\s*:?\s*(T-\d{3,})\b/gi;
+const TABS = ["checklist", "macros", "review", "activity"].map(key => ({ key, get label() { return T("tab." + key); } }));
+const YAML_OPTS = { schema: jsyaml.CORE_SCHEMA };
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("roadmap:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { v == null ? localStorage.removeItem("roadmap:" + k) : localStorage.setItem("roadmap:" + k, JSON.stringify(v)); } catch {} }
+};
+
+/* ---------- language (per device) ----------
+   UI text only. Commit messages and data written to the repository stay in English (repo convention). */
+const I18N = {
+  en: {
+    "st.todo": "To do", "st.doing": "In progress", "st.review": "Review", "st.done": "Done", "st.blocked": "Blocked",
+    "tab.checklist": "Checklist", "tab.macros": "Macros", "tab.review": "Review queue", "tab.activity": "Activity",
+    "owner.kaa": "Kaa", "owner.ai": "AI",
+    "area.macros": "macros", "area.blog": "blog", "area.infra": "infra", "area.docs": "docs", "area.research": "research",
+    "pri.high": "high", "pri.normal": "normal", "pri.low": "low",
+    "theme": "Theme", "lang": "Language", "skin.system": "System", "skin.stone": "Stone · light", "skin.slate": "Slate · light", "skin.teal": "Teal night · dark", "skin.ink": "Ink · dark",
+    "v.msNoId": "Milestone without id or title", "v.dupMs": id => `Duplicate milestone ${id}`, "v.badId": id => `Bad task id ${id}`, "v.dupTask": id => `Duplicate task ${id}`,
+    "v.empty": id => `${id}: title is empty`, "v.status": id => `${id}: unknown status`, "v.area": id => `${id}: unknown area`, "v.owner": id => `${id}: unknown owner`,
+    "v.priority": id => `${id}: unknown priority`, "v.milestone": (id, m) => `${id}: unknown milestone ${m}`,
+    "save.not": "Not saved: ", "save.offline": "Not saved: api.github.com is unreachable. Check the connection and press Retry.",
+    "save.perm": "Not saved: the token can't write to this repository. Check its permissions in Settings.", "save.404": "Not saved: repository or branch not found.",
+    "load.401": "GitHub rejected the token. Paste a new one in Settings.",
+    "load.404": (path, repo, branch) => `Couldn't find ${path} in ${repo} on branch ${branch}, or the token has no access to that repository.`,
+    "load.403": "GitHub refused the request (permissions or rate limit). Check the token and try again in a minute.",
+    "load.offline": "Couldn't reach api.github.com. ", "load.inFrame": "This page is open inside a preview window that blocks network requests: download the file and open it in your browser.",
+    "load.checkNet": "Check the internet connection or VPN and press Refresh.", "load.other": "Couldn't reach GitHub: ",
+    "auto.commit": sha => `closed by commit ${sha}`, "auto.file": path => `done: ${path} exists`,
+    "tryAgain": "Try again", "settings": "Settings", "loadingFrom": repo => `Loading the roadmap from ${repo}…`,
+    "truncated": "The repository is too large for one tree request; Macros and Review queue may be incomplete.",
+    "repository": "Repository", "loading": "Loading…", "refresh": "Refresh",
+    "progress": "Progress", "overall": "Overall progress", "ofDone": (d, n) => `${d} of ${n} done`, "byStatus": "By status · click to filter",
+    "search": "Search title, id, notes", "searchAria": "Search tasks", "area": "Area", "owner": "Owner", "status": "Status",
+    "allAreas": "All areas", "bothOwners": "Kaa and AI", "anyStatus": "Any status", "hideDone": "Hide done", "reset": "Reset", "addMs": "Add milestone",
+    "daysLeft": n => `${n} d left · `, "due": d => `due ${d}`, "overdue": n => `${n} d overdue`, "noMs": "No milestone", "edit": "Edit",
+    "noMatch": "No tasks match the filters.", "noTasks": "No tasks yet.", "addTaskRow": "+ Add task",
+    "markDoneAria": id => `Mark ${id} done`, "markDone": "Mark done", "autoUpdated": a => `Updated automatically: ${a}`, "doneOn": d => `done ${d}`, "auto": "auto",
+    "statusOf": id => `Status of ${id}`,
+    "title": "Title", "titlePh": "What needs to happen", "priority": "Priority", "milestone": "Milestone", "none": "None", "dueLabel": "Due", "notes": "Notes",
+    "links": "Links (repo paths or URLs, comma-separated)", "commitsMention": id => `Commits mentioning ${id}`,
+    "noCommitsYet": id => `None yet. Write <span class="mono">${id}</span> in a commit message to link it, or <span class="mono">closes ${id}</span> to finish it.`,
+    "save": "Save", "addTask": "Add task", "cancel": "Cancel", "deleteTask": "Delete task", "confirmDelete": "Click again to delete", "description": "Description",
+    "noMacros": "No macros documented yet. Each folder in <code>macros/&lt;name&gt;/</code> appears here with its pipeline: schema → card → diagram → reviewed by a human. Stages are read from the files in the repo.",
+    "macro": "Macro", "schema": "Schema", "card": "Card", "diagram": "Diagram", "reviewed": "Reviewed", "stageDone": "done", "stageMissing": "missing",
+    "allReviewed": "Every AI-generated file has been reviewed.",
+    "reviewBranch": b => `In branch ${b} — not on the data branch yet (waiting in a PR)`,
+    "reviewNote": mark => `AI-generated files still marked <code>${mark}</code>. After reviewing a file, change its mark to “reviewed by a human, YYYY-MM-DD”; it leaves this list on the next refresh.`,
+    "file": "File", "folder": "Folder", "root": "root", "noCommits": "No commits found.",
+    "saving": "Saving to GitHub…", "retry": "Retry", "pending": n => `${n} change${n > 1 ? "s" : ""} · saving in a moment`, "saveNow": "Save now", "savedCommit": "Saved · commit",
+    "connect": "Connect to GitHub",
+    "inFrame": "This page is running inside a preview window. Previews block requests to GitHub, so connecting won't work here. Download the file and open it in Chrome, Firefox or Yandex Browser.",
+    "connectIntro": path => `The roadmap lives in <code>${path}</code> in your repository. This page reads it directly from GitHub and saves your edits back as commits, so the token never leaves this browser.`,
+    "step1": `Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained tokens → Generate new token</a>.`,
+    "step2": repo => `Repository access: <b>Only select repositories</b> → <code>${repo}</code>.`,
+    "step3": "Permissions: <b>Contents — Read and write</b>. Nothing else is needed.", "step4": "Paste the token below.",
+    "ownerField": "Owner", "repoField": "Repository", "branchField": "Branch", "token": "Token", "remember": "Remember on this device", "connectBtn": "Connect", "forget": "Forget token",
+    "newMs": "New milestone",
+    "previews": "Previews", "pv.title": "Branch previews", "pv.loading": "Looking for previews…", "pv.live": "Live page", "pv.here": "you are here",
+    "pv.none": "No published previews. Push a roadmap-* branch that changes roadmap/ and its preview appears here in about a minute.",
+    "pv.unchecked": "couldn't check that the preview is published", "pv.error": "Couldn't load branches: ",
+    "pv.foot": "Previews read and write the real tasks on main. Old previews stay until their folder is deleted in the Pages repository.",
+    "previewBanner": (code, data) => `Preview of branch <b>${code}</b> · tasks from <b>${data}</b>, edits are real commits · <a href="../../">live page</a>`,
+    "crash": m => `Something went wrong: ${m}. Reload the page; if it repeats, send this message to Claude.`,
+    "noYaml": "The YAML library (js-yaml.min.js) didn't load. It has to sit in the same folder as this page; rebuild with roadmap/build.py."
+  },
+  ru: {
+    "st.todo": "Не начато", "st.doing": "В работе", "st.review": "На проверке", "st.done": "Готово", "st.blocked": "Заблокировано",
+    "tab.checklist": "Чек-лист", "tab.macros": "Макросы", "tab.review": "На ревью", "tab.activity": "Активность",
+    "owner.kaa": "Каа", "owner.ai": "ИИ",
+    "area.macros": "макросы", "area.blog": "блог", "area.infra": "инфраструктура", "area.docs": "документация", "area.research": "исследования",
+    "pri.high": "высокий", "pri.normal": "обычный", "pri.low": "низкий",
+    "theme": "Тема", "lang": "Язык", "skin.system": "Как в системе", "skin.stone": "Камень · светлая", "skin.slate": "Сланец · светлая", "skin.teal": "Бирюзовая ночь · тёмная", "skin.ink": "Чернила · тёмная",
+    "v.msNoId": "Веха без id или названия", "v.dupMs": id => `Повтор вехи ${id}`, "v.badId": id => `Неверный id задачи ${id}`, "v.dupTask": id => `Повтор задачи ${id}`,
+    "v.empty": id => `${id}: пустое название`, "v.status": id => `${id}: неизвестный статус`, "v.area": id => `${id}: неизвестная область`, "v.owner": id => `${id}: неизвестный исполнитель`,
+    "v.priority": id => `${id}: неизвестный приоритет`, "v.milestone": (id, m) => `${id}: неизвестная веха ${m}`,
+    "save.not": "Не сохранено: ", "save.offline": "Не сохранено: api.github.com недоступен. Проверьте соединение и нажмите «Повторить».",
+    "save.perm": "Не сохранено: у токена нет права записи в этот репозиторий. Проверьте его разрешения в настройках.", "save.404": "Не сохранено: репозиторий или ветка не найдены.",
+    "load.401": "GitHub отклонил токен. Вставьте новый в настройках.",
+    "load.404": (path, repo, branch) => `Не найден ${path} в ${repo} на ветке ${branch}, или у токена нет доступа к этому репозиторию.`,
+    "load.403": "GitHub отказал в запросе (права доступа или лимит запросов). Проверьте токен и попробуйте через минуту.",
+    "load.offline": "Не удалось связаться с api.github.com. ", "load.inFrame": "Страница открыта в окне предпросмотра, которое блокирует запросы в сеть: скачайте файл и откройте его в браузере.",
+    "load.checkNet": "Проверьте интернет или VPN и нажмите «Обновить».", "load.other": "Не удалось связаться с GitHub: ",
+    "auto.commit": sha => `закрыто коммитом ${sha}`, "auto.file": path => `готово: файл ${path} существует`,
+    "tryAgain": "Попробовать снова", "settings": "Настройки", "loadingFrom": repo => `Загружаю роадмап из ${repo}…`,
+    "truncated": "Репозиторий слишком большой для одного запроса дерева файлов; списки «Макросы» и «На ревью» могут быть неполными.",
+    "repository": "Репозиторий", "loading": "Загрузка…", "refresh": "Обновить",
+    "progress": "Прогресс", "overall": "Общий прогресс", "ofDone": (d, n) => `готово ${d} из ${n}`, "byStatus": "По статусам · нажмите, чтобы отфильтровать",
+    "search": "Поиск по названию, id, заметкам", "searchAria": "Поиск задач", "area": "Область", "owner": "Исполнитель", "status": "Статус",
+    "allAreas": "Все области", "bothOwners": "Каа и ИИ", "anyStatus": "Любой статус", "hideDone": "Скрыть готовые", "reset": "Сбросить", "addMs": "Добавить веху",
+    "daysLeft": n => `осталось ${n} ${plural(n, "день", "дня", "дней")} · `, "due": d => `срок ${d}`, "overdue": n => `просрочено на ${n} ${plural(n, "день", "дня", "дней")}`,
+    "noMs": "Без вехи", "edit": "Изменить",
+    "noMatch": "Нет задач под эти фильтры.", "noTasks": "Задач пока нет.", "addTaskRow": "+ Добавить задачу",
+    "markDoneAria": id => `Отметить ${id} как готовую`, "markDone": "Отметить как готовую", "autoUpdated": a => `Обновлено автоматически: ${a}`, "doneOn": d => `готово ${d}`, "auto": "авто",
+    "statusOf": id => `Статус ${id}`,
+    "title": "Название", "titlePh": "Что нужно сделать", "priority": "Приоритет", "milestone": "Веха", "none": "Нет", "dueLabel": "Срок", "notes": "Заметки",
+    "links": "Ссылки (пути в репозитории или URL через запятую)", "commitsMention": id => `Коммиты с упоминанием ${id}`,
+    "noCommitsYet": id => `Пока нет. Напишите <span class="mono">${id}</span> в сообщении коммита, чтобы связать его с задачей, или <span class="mono">closes ${id}</span>, чтобы закрыть её.`,
+    "save": "Сохранить", "addTask": "Добавить задачу", "cancel": "Отмена", "deleteTask": "Удалить задачу", "confirmDelete": "Нажмите ещё раз, чтобы удалить", "description": "Описание",
+    "noMacros": "Пока нет описанных макросов. Каждая папка <code>macros/&lt;имя&gt;/</code> появится здесь со своим конвейером: схема → карточка → диаграмма → проверено человеком. Этапы определяются по файлам в репозитории.",
+    "macro": "Макрос", "schema": "Схема", "card": "Карточка", "diagram": "Диаграмма", "reviewed": "Проверено", "stageDone": "есть", "stageMissing": "нет",
+    "allReviewed": "Все файлы, созданные ИИ, проверены.",
+    "reviewBranch": b => `В ветке ${b} — ещё не в основной ветке (ждёт в PR)`,
+    "reviewNote": mark => `Файлы, созданные ИИ, у которых ещё стоит пометка <code>${mark}</code>. После проверки замените пометку на «reviewed by a human, ГГГГ-ММ-ДД» — при следующем обновлении файл уйдёт из списка.`,
+    "file": "Файл", "folder": "Папка", "root": "корень", "noCommits": "Коммитов не найдено.",
+    "saving": "Сохраняю в GitHub…", "retry": "Повторить", "pending": n => `${n} ${plural(n, "изменение", "изменения", "изменений")} · сохраню через мгновение`, "saveNow": "Сохранить сейчас", "savedCommit": "Сохранено · коммит",
+    "connect": "Подключение к GitHub",
+    "inFrame": "Страница открыта в окне предпросмотра. Предпросмотр блокирует запросы к GitHub, поэтому подключиться здесь не получится. Скачайте файл и откройте его в Chrome, Firefox или Яндекс Браузере.",
+    "connectIntro": path => `Роадмап хранится в файле <code>${path}</code> в вашем репозитории. Страница читает его прямо из GitHub и сохраняет правки коммитами, токен не покидает этот браузер.`,
+    "step1": `Откройте <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained tokens → Generate new token</a>.`,
+    "step2": repo => `Repository access: <b>Only select repositories</b> → <code>${repo}</code>.`,
+    "step3": "Permissions: <b>Contents — Read and write</b>. Больше ничего не нужно.", "step4": "Вставьте токен ниже.",
+    "ownerField": "Владелец", "repoField": "Репозиторий", "branchField": "Ветка", "token": "Токен", "remember": "Запомнить на этом устройстве", "connectBtn": "Подключить", "forget": "Забыть токен",
+    "newMs": "Новая веха",
+    "previews": "Превью", "pv.title": "Превью веток", "pv.loading": "Ищу превью…", "pv.live": "Основная версия", "pv.here": "вы здесь",
+    "pv.none": "Опубликованных превью нет. Запушьте ветку roadmap-* с изменениями в roadmap/, и через минуту её превью появится здесь.",
+    "pv.unchecked": "не удалось проверить, что превью опубликовано", "pv.error": "Не удалось загрузить ветки: ",
+    "pv.foot": "Превью читают и меняют настоящие задачи в main. Старые превью остаются, пока их папку не удалят в репозитории Pages.",
+    "previewBanner": (code, data) => `Превью ветки <b>${code}</b> · задачи из <b>${data}</b>, правки — настоящие коммиты · <a href="../../">основная версия</a>`,
+    "crash": m => `Что-то пошло не так: ${m}. Перезагрузите страницу; если повторится, отправьте это сообщение Claude.`,
+    "noYaml": "Библиотека YAML (js-yaml.min.js) не загрузилась. Она должна лежать в одной папке со страницей; пересоберите через roadmap/build.py."
+  }
+};
+const LANGS = ["en", "ru"];
+// Russian plural: 1 день, 2 дня, 5 дней
+function plural(n, one, few, many) { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many; }
+let lang = store.get("lang", null);
+if (!LANGS.includes(lang)) lang = /^ru\b/i.test(navigator.language || "") ? "ru" : "en";
+function T(key, ...args) { const v = I18N[lang][key] ?? I18N.en[key] ?? key; return typeof v === "function" ? v(...args) : v; }
+const areaLabel = a => T("area." + a) === "area." + a ? a : T("area." + a);
+const priLabel = p => T("pri." + p) === "pri." + p ? p : T("pri." + p);
+function applyLangStatic() {
+  document.documentElement.lang = lang;
+  $("skin-label").textContent = T("theme");
+  $("lang-label").textContent = T("lang");
+  $("skin").querySelectorAll("option").forEach(o => o.textContent = T("skin." + (o.value || "system")));
+  $("lang").value = lang;
+}
+
+/* ---------- state ---------- */
+// a preview keeps its own repo/branch settings (same origin as the live page); the token and look are shared
+const CFG_KEY = DEFAULTS.preview ? "cfg:preview" : "cfg";
+const cfg = Object.assign({}, DEFAULTS, store.get(CFG_KEY, {}), { token: store.get("token", null) || sessionToken() });
+function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); } catch { return null; } }
+const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false }, store.get("ui", {}));
+if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
+let doc = null, header = "", fileSha = null, tree = [], treeTruncated = false, commits = [], contents = {}, derived = {};
+let branchReview = [];   // [{ branch, files: [path] }] — AI-marked files changed in roadmap-* branches, not yet on the data branch
+let pending = [], saveTimer = null, savebarTimer = null, saving = false, lastSave = null, saveError = null, openEditor = null, loadError = null, loading = false;
+
+/* ---------- theme (per device) ---------- */
+const SKINS = ["stone", "slate", "teal", "ink"];
+function applySkin(k) {
+  if (SKINS.includes(k)) document.documentElement.setAttribute("data-skin", k);
+  else document.documentElement.removeAttribute("data-skin");
+  $("skin").value = SKINS.includes(k) ? k : "";
+}
+applySkin(store.get("skin", null));
+$("skin").onchange = e => { const k = e.target.value || null; store.set("skin", k); applySkin(k); };
+applyLangStatic();
+$("lang").onchange = e => { lang = LANGS.includes(e.target.value) ? e.target.value : "en"; store.set("lang", lang); applyLangStatic(); derive(); render(); renderPreviews(); };
+
+/* ---------- GitHub API ---------- */
+async function gh(path, { method = "GET", body, raw = false } = {}) {
+  const res = await fetch("https://api.github.com" + path, {
+    method,
+    headers: {
+      Authorization: "Bearer " + cfg.token,
+      Accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      ...(body ? { "Content-Type": "application/json" } : {})
+    },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store"
+  });
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { msg = (await res.json()).message || msg; } catch {}
+    const err = new Error(msg); err.status = res.status; throw err;
+  }
+  return raw ? res.text() : res.json();
+}
+const repoPath = () => `/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`;
+const b64decode = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), c => c.charCodeAt(0)));
+function b64encode(text) {
+  const bytes = new TextEncoder().encode(text); let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+const ghUrl = (path) => /^https?:\/\//.test(path) ? path :
+  `https://github.com/${cfg.owner}/${cfg.repo}/${path.endsWith("/") ? "tree" : "blob"}/${cfg.branch}/${path.replace(/^\/+/, "")}`;
+
+/* ---------- YAML file ---------- */
+function splitHeader(text) {
+  const lines = text.split("\n"); let i = 0;
+  while (i < lines.length && (lines[i].startsWith("#") || lines[i].trim() === "")) i++;
+  return [lines.slice(0, i).join("\n").replace(/\s+$/, ""), lines.slice(i).join("\n")];
+}
+function parseFile(text) {
+  const [head] = splitHeader(text);
+  const data = jsyaml.load(text, YAML_OPTS) || {};
+  data.milestones = data.milestones || []; data.tasks = data.tasks || [];
+  data.tasks.forEach(t => { t.links = t.links || []; });
+  return { head, data };
+}
+function clean(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === "" || v == null || (Array.isArray(v) && !v.length)) continue;
+    out[k] = v;
+  }
+  return out;
+}
+const TASK_ORDER = ["id", "title", "milestone", "area", "status", "owner", "priority", "created", "due", "done", "links", "notes", "done_when"];
+const MS_ORDER = ["id", "title", "due", "description"];
+function ordered(obj, order) {
+  const o = {};
+  order.forEach(k => { if (k in obj) o[k] = obj[k]; });
+  Object.keys(obj).forEach(k => { if (!(k in o)) o[k] = obj[k]; });
+  return o;
+}
+function serialize(data) {
+  const body = jsyaml.dump({
+    milestones: data.milestones.map(m => ordered(clean(m), MS_ORDER)),
+    tasks: data.tasks.map(t => ordered(clean(t), TASK_ORDER))
+  }, { ...YAML_OPTS, lineWidth: -1, noRefs: true, flowLevel: 3 });
+  return (header ? header + "\n\n" : "") + body;
+}
+function validate(data) {
+  const errs = [], ms = new Set(), ids = new Set();
+  data.milestones.forEach(m => { if (!m.id || !m.title) errs.push(T("v.msNoId")); if (ms.has(m.id)) errs.push(T("v.dupMs", m.id)); ms.add(m.id); });
+  data.tasks.forEach(t => {
+    if (!/^T-\d{3,}$/.test(t.id || "")) errs.push(T("v.badId", t.id));
+    if (ids.has(t.id)) errs.push(T("v.dupTask", t.id)); ids.add(t.id);
+    if (!t.title || !String(t.title).trim()) errs.push(T("v.empty", t.id));
+    if (!STATUS_LABEL[t.status]) errs.push(T("v.status", t.id));
+    if (!AREAS.includes(t.area)) errs.push(T("v.area", t.id));
+    if (!OWNERS[t.owner]) errs.push(T("v.owner", t.id));
+    if (t.priority && !PRIORITIES.includes(t.priority)) errs.push(T("v.priority", t.id));
+    if (t.milestone && !ms.has(t.milestone)) errs.push(T("v.milestone", t.id, t.milestone));
+  });
+  return errs;
+}
+
+/* ---------- edits: ops are replayed on top of a newer file if someone else committed meanwhile ---------- */
+function applyOp(data, op) {
+  if (op.type === "task") {
+    const t = data.tasks.find(x => x.id === op.id);
+    if (t) Object.assign(t, op.fields);
+  } else if (op.type === "add-task") {
+    if (data.tasks.some(x => x.id === op.task.id)) op.task.id = nextId(data);
+    data.tasks.push(structuredClone(op.task));
+  } else if (op.type === "delete-task") {
+    data.tasks = data.tasks.filter(x => x.id !== op.id);
+  } else if (op.type === "ms") {
+    const m = data.milestones.find(x => x.id === op.id);
+    if (m) Object.assign(m, op.fields);
+  } else if (op.type === "add-ms") {
+    if (!data.milestones.some(x => x.id === op.ms.id)) data.milestones.push(structuredClone(op.ms));
+  }
+}
+function edit(op) {
+  applyOp(doc, op);
+  derive();
+  pending.push(op);
+  saveError = null;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 2500);
+  render();
+}
+function describe(ops) {
+  const parts = [];
+  ops.forEach(op => {
+    if (op.type === "task") {
+      if (op.fields.status) parts.push(`${op.id} → ${op.fields.status}`);
+      else parts.push(`${op.id} edited`);
+    } else if (op.type === "add-task") parts.push(`${op.task.id} added`);
+    else if (op.type === "delete-task") parts.push(`${op.id} deleted`);
+    else if (op.type === "ms") parts.push(`${op.id} edited`);
+    else if (op.type === "add-ms") parts.push(`${op.ms.id} added`);
+  });
+  return [...new Set(parts)].join(", ");
+}
+async function save() {
+  if (saving || !pending.length) return;
+  const errs = validate(doc);
+  if (errs.length) { saveError = T("save.not") + errs.join("; "); renderSavebar(); return; }
+  saving = true; renderSavebar();
+  const ops = pending.slice();
+  const message = `roadmap: ${describe(ops)}\n\nEdited via the roadmap web page.`;
+  try {
+    let res;
+    try {
+      res = await gh(`${repoPath()}/contents/${TASKS_PATH}`, { method: "PUT", body: { message, content: b64encode(serialize(doc)), sha: fileSha, branch: cfg.branch } });
+    } catch (e) {
+      if (e.status !== 409 && e.status !== 422) throw e;
+      // The file changed in the repo after we loaded it: take the latest version and replay our edits on top.
+      const latest = await gh(`${repoPath()}/contents/${TASKS_PATH}?ref=${encodeURIComponent(cfg.branch)}`);
+      const parsed = parseFile(b64decode(latest.content));
+      ops.forEach(op => applyOp(parsed.data, op));
+      header = parsed.head;
+      res = await gh(`${repoPath()}/contents/${TASKS_PATH}`, { method: "PUT", body: { message, content: b64encode(serialize(parsed.data)), sha: latest.sha, branch: cfg.branch } });
+      // edits made while the requests were in flight live only in the old doc: replay them on the new one
+      pending.slice(ops.length).forEach(op => applyOp(parsed.data, op));
+      doc = parsed.data;
+    }
+    fileSha = res.content.sha;
+    pending = pending.slice(ops.length);
+    lastSave = { sha: res.commit.sha, short: res.commit.sha.slice(0, 7), at: new Date() };
+    commits.unshift({ sha: res.commit.sha, short: lastSave.short, subject: message.split("\n")[0], date: new Date().toISOString(), refs: [...new Set(message.match(ID_RE) || [])], closes: [...new Set([...message.matchAll(CLOSE_RE)].map(m => m[1].toUpperCase()))] });
+  } catch (e) {
+    saveError = e instanceof TypeError ? T("save.offline")
+      : e.status === 401 || e.status === 403 ? T("save.perm")
+      : e.status === 404 ? T("save.404") : T("save.not") + e.message;
+  } finally {
+    saving = false;
+    derive(); render();
+    if (pending.length && !saveError) { clearTimeout(saveTimer); saveTimer = setTimeout(save, 1000); }
+  }
+}
+window.addEventListener("beforeunload", e => { if (pending.length || saving) { e.preventDefault(); e.returnValue = ""; } });
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); clearTimeout(saveTimer); save(); }
+  else if (e.key === "Escape" && openEditor) { openEditor = null; render(); }
+});
+
+/* ---------- load from repo ---------- */
+async function pool(items, n, fn) {
+  const out = []; let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k]); } }));
+  return out;
+}
+async function load() {
+  if (!cfg.token) { render(); return; }
+  if (saving) { setTimeout(load, 400); return; }
+  if (pending.length) { clearTimeout(saveTimer); await save(); if (pending.length) return; }
+  loading = true; loadError = null; render();
+  try {
+    const [file, treeRes, commitRes] = await Promise.all([
+      gh(`${repoPath()}/contents/${TASKS_PATH}?ref=${encodeURIComponent(cfg.branch)}`),
+      gh(`${repoPath()}/git/trees/${encodeURIComponent(cfg.branch)}?recursive=1`),
+      gh(`${repoPath()}/commits?sha=${encodeURIComponent(cfg.branch)}&per_page=60`)
+    ]);
+    const parsed = parseFile(b64decode(file.content));
+    header = parsed.head; doc = parsed.data; fileSha = file.sha;
+    const blobs = treeRes.tree.filter(x => x.type === "blob");
+    tree = blobs.map(x => x.path);
+    treeTruncated = !!treeRes.truncated;
+    commits = commitRes.map(c => {
+      const msg = c.commit.message, subject = msg.split("\n")[0];
+      return { sha: c.sha, short: c.sha.slice(0, 7), subject, date: c.commit.author.date, refs: [...new Set(msg.match(ID_RE) || [])],
+        closes: [...new Set([...msg.matchAll(CLOSE_RE)].map(m => m[1].toUpperCase()))] };
+    });
+    const scan = blobs.filter(b => SCAN_EXT.test(b.path) && !SKIP.test(b.path));
+    const cache = store.get("heads", {});
+    const fresh = {};
+    const texts = await pool(scan, 8, async b => {
+      if (cache[b.sha] != null) return cache[b.sha];
+      const text = await gh(`${repoPath()}/git/blobs/${b.sha}`, { raw: true }).catch(() => null);
+      return text == null ? null : text.slice(0, HEAD_LEN);
+    });
+    contents = {};
+    scan.forEach((b, i) => { if (texts[i] != null) { contents[b.path] = texts[i]; fresh[b.sha] = texts[i]; } });
+    store.set("heads", fresh);
+    store.set("lastRepo", { owner: cfg.owner, repo: cfg.repo });
+    loadBranchReview().then(render);   // not awaited: the page is usable while branches are checked
+  } catch (e) {
+    loadError = e.status === 401 ? T("load.401")
+      : e.status === 404 ? T("load.404", TASKS_PATH, `${cfg.owner}/${cfg.repo}`, cfg.branch)
+      : e.status === 403 ? T("load.403")
+      : e instanceof TypeError ? T("load.offline") + (inFrame ? T("load.inFrame") : T("load.checkNet"))
+      : T("load.other") + e.message;
+  } finally {
+    loading = false; derive(); render();
+  }
+}
+
+/* ---------- derived data: commit links, auto-done, macros, review queue ---------- */
+function globToRe(glob) {
+  return new RegExp("^" + glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*\*\/?/g, "§").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]").replace(/§/g, ".*") + "(/.*)?$");
+}
+function derive() {
+  derived = {};
+  if (!doc) return;
+  const byId = Object.fromEntries(doc.tasks.map(t => [t.id, t]));
+  doc.tasks.forEach(t => derived[t.id] = { commits: [], auto: null });
+  [...commits].reverse().forEach(c => {
+    c.refs.forEach(r => derived[r] && derived[r].commits.unshift(c));
+    c.closes.forEach(r => { if (byId[r] && byId[r].status !== "done" && !derived[r].auto) derived[r].auto = T("auto.commit", c.short); });
+  });
+  doc.tasks.forEach(t => {
+    const pat = t.done_when && t.done_when.exists;
+    if (pat && t.status !== "done" && !derived[t.id].auto) {
+      const re = globToRe(pat), hit = tree.find(p => re.test(p));
+      if (hit) derived[t.id].auto = T("auto.file", hit);
+    }
+  });
+}
+const effStatus = t => derived[t.id]?.auto ? "done" : (STATUS_LABEL[t.status] ? t.status : "todo");
+function macros() {
+  const by = {};
+  tree.forEach(p => { const m = p.match(/^macros\/([^/]+)\/([^/]+)$/); if (m) (by[m[1]] = by[m[1]] || []).push(m[2]); });
+  return Object.keys(by).sort().map(name => {
+    const files = by[name], dir = `macros/${name}/`;
+    const card = files.find(f => f.endsWith(".md") && f !== "README.md"), schema = files.find(f => f.endsWith(".schema.json")), svg = files.find(f => f.endsWith(".svg"));
+    let reviewed = !!schema && /"reviewedByHuman"\s*:\s*true/.test(contents[dir + schema] || "");
+    if (card && (contents[dir + card] || "").includes(AI_MARK)) reviewed = false;
+    const stages = { schema: !!schema, card: !!card, diagram: !!svg, reviewed };
+    return { name, dir, stages, progress: Math.round(100 * Object.values(stages).filter(Boolean).length / 4) };
+  });
+}
+const reviewQueue = () => Object.entries(contents)
+  .filter(([, head]) => head.includes(AI_MARK) || /"reviewedByHuman"\s*:\s*false/.test(head))
+  .map(([p]) => p).sort();
+function nextId(data = doc) {
+  const n = Math.max(0, ...data.tasks.map(t => parseInt(String(t.id).slice(2), 10) || 0)) + 1;
+  return "T-" + String(n).padStart(3, "0");
+}
+
+/* ---------- rendering ---------- */
+const fmtDate = d => d ? new Date(d.length === 10 ? d + "T00:00:00" : d).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-GB", { day: "2-digit", month: "short" }) : "—";
+const daysLeft = due => Math.round((new Date(due + "T00:00:00") - new Date(today() + "T00:00:00")) / 864e5);
+const isLate = t => t.due && effStatus(t) !== "done" && t.due < today();
+
+function render() {
+  store.set("ui", ui);
+  // sandboxed previews (e.g. opaque-origin iframes) refuse URL changes; the tab hash is only a convenience
+  try { if (location.hash.slice(1) !== ui.tab) history.replaceState(null, "", "#" + ui.tab); } catch {}
+  renderMeta(); renderSavebar();
+  if (!cfg.token) return renderConnect();
+  if (!doc) {
+    $("main").innerHTML = loadError ? `<div class="error">${esc(loadError)}</div><p><button class="btn" type="button" id="retry">${T("tryAgain")}</button> <button class="btn ghost" type="button" id="go-settings">${T("settings")}</button></p>`
+      : `<div class="note">${esc(T("loadingFrom", `${cfg.owner}/${cfg.repo}`))}</div>`;
+    $("retry") && ($("retry").onclick = load);
+    $("go-settings") && ($("go-settings").onclick = () => renderConnect(true));
+    return;
+  }
+  const counts = { checklist: doc.tasks.length, macros: macros().length, review: reviewQueue().length + branchReview.reduce((n, x) => n + x.files.length, 0), activity: commits.length };
+  $("main").innerHTML = `
+    ${loadError ? `<div class="error">${esc(loadError)}</div>` : ""}
+    ${treeTruncated ? `<div class="note">${T("truncated")}</div>` : ""}
+    ${renderSummary()}
+    <section>
+      <div class="tabs" role="tablist">${TABS.map(t => `<button class="tab" role="tab" type="button" data-tab="${t.key}" aria-selected="${ui.tab === t.key}">${t.label}<small>${counts[t.key]}</small></button>`).join("")}</div>
+      <div id="view">${{ checklist: renderChecklist, macros: renderMacros, review: renderReview, activity: renderActivity }[ui.tab]()}</div>
+    </section>`;
+  bind();
+}
+
+function renderMeta() {
+  if (DEFAULTS.preview) {
+    const b = $("preview-banner");
+    b.hidden = false; b.innerHTML = T("previewBanner", esc(DEFAULTS.preview), esc(cfg.branch));
+    document.title = "[preview] SAS kaa Roadmap";
+  }
+  $("repo-label").textContent = `${cfg.owner}/${cfg.repo}`;
+  $("meta").innerHTML = cfg.token ? `
+    <a href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}" target="_blank" rel="noopener">${T("repository")}</a>
+    <span class="mono">${esc(cfg.branch)}</span>
+    <button class="btn" type="button" id="reload" ${loading ? "disabled" : ""}>${loading ? T("loading") : T("refresh")}</button>
+    <button class="btn" type="button" id="pv-btn" aria-haspopup="dialog" aria-controls="pv-pop" aria-expanded="${!$("pv-pop").hidden}">${T("previews")}</button>
+    <button class="btn" type="button" id="settings">${T("settings")}</button>` : "";
+  $("pv-btn") && ($("pv-btn").onclick = togglePreviews);
+  $("reload") && ($("reload").onclick = load);
+  $("settings") && ($("settings").onclick = () => renderConnect(true));
+}
+
+/* ---------- branch previews menu ---------- */
+// Pages layout: live page at the site root, previews at preview/<branch>/ (see .github/workflows/roadmap.yml)
+const siteRoot = () => new URL(DEFAULTS.preview ? "../../" : "./", location.href);
+const previewSlug = name => name.replace(/\//g, "-");
+let pvState = null;   // null | "loading" | { items, error }
+async function loadPreviews() {
+  pvState = "loading"; renderPreviews();
+  try {
+    const branches = (await gh(`${repoPath()}/branches?per_page=100`)).filter(b => /^roadmap-/.test(b.name)).slice(0, 30);
+    const items = await pool(branches, 6, async b => {
+      const url = new URL(`preview/${encodeURIComponent(previewSlug(b.name))}/`, siteRoot()).href;
+      let published = null;   // true / false / null = couldn't check (e.g. opened from a file or a sandboxed preview)
+      try { const r = await fetch(url + "index.html", { method: "HEAD", cache: "no-store" }); published = r.ok; } catch {}
+      const c = await gh(`${repoPath()}/commits/${b.commit.sha}`).catch(() => null);
+      return { name: b.name, url, published, date: c ? c.commit.committer.date : "" };
+    });
+    pvState = { items: items.filter(x => x.published !== false).sort((a, b) => (b.date || "").localeCompare(a.date || "")), error: null };
+  } catch (e) {
+    pvState = { items: [], error: T("pv.error") + e.message };
+  }
+  renderPreviews();
+}
+function renderPreviews() {
+  const pop = $("pv-pop");
+  if (pop.hidden) return;
+  const live = `<li><a href="${esc(siteRoot().href)}"><span>${T("pv.live")}</span><span class="when">${DEFAULTS.preview ? "" : `<span class="here">${T("pv.here")}</span>`}</span></a></li>`;
+  let body;
+  if (pvState === "loading" || !pvState) body = `<p class="pv-foot">${T("pv.loading")}</p>`;
+  else if (pvState.error) body = `<div class="error">${esc(pvState.error)}</div>`;
+  else body = (pvState.items.length ? "" : `<p class="pv-foot">${T("pv.none")}</p>`);
+  const items = pvState && pvState !== "loading" ? pvState.items.map(x => `<li><a href="${esc(x.url)}">
+      <span class="name">${esc(x.name)}</span>
+      <span class="when">${DEFAULTS.preview === x.name ? `<span class="here">${T("pv.here")}</span> · ` : ""}${x.date ? fmtDate(x.date) : ""}</span>
+      ${x.published === null ? `<span class="note2">${T("pv.unchecked")}</span>` : ""}</a></li>`).join("") : "";
+  pop.innerHTML = `<h2 id="pv-title">${T("pv.title")}</h2><ul class="pv-list">${live}${items}</ul>${body}<p class="pv-foot">${T("pv.foot")}</p>`;
+}
+function togglePreviews() {
+  const pop = $("pv-pop");
+  pop.hidden = !pop.hidden;
+  $("pv-btn") && $("pv-btn").setAttribute("aria-expanded", String(!pop.hidden));
+  if (!pop.hidden) { renderPreviews(); if (pvState !== "loading") loadPreviews(); }   // refreshed on every open
+}
+function closePreviews() { if (!$("pv-pop").hidden) togglePreviews(); }
+document.addEventListener("click", e => { if (!$("pv-pop").hidden && !e.target.closest("#pv-pop, #pv-btn")) closePreviews(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("pv-pop").hidden) { closePreviews(); $("pv-btn")?.focus(); } });
+
+function renderSummary() {
+  const n = doc.tasks.length || 1;
+  const by = Object.fromEntries(STATUS.map(s => [s.key, doc.tasks.filter(t => effStatus(t) === s.key).length]));
+  return `<section class="summary" aria-label="${T("progress")}">
+    <div class="panel" style="display:grid;gap:10px">
+      <div class="label">${T("overall")}</div>
+      <div><span class="big">${Math.round(100 * by.done / n)}%</span> <span class="muted">${T("ofDone", by.done, doc.tasks.length)}</span></div>
+      <div class="bar">${STATUS.filter(s => by[s.key]).map(s => `<i style="width:${100 * by[s.key] / n}%;background:var(--${s.key})" title="${s.label}: ${by[s.key]}"></i>`).join("")}</div>
+    </div>
+    <div class="panel" style="display:grid;gap:10px">
+      <div class="label">${T("byStatus")}</div>
+      <div class="counts">${STATUS.map(s => `<button class="count" type="button" data-count="${s.key}" aria-pressed="${ui.status === s.key}"><b><i class="dot" style="background:var(--${s.key})"></i>${by[s.key]}</b><span>${s.label}</span></button>`).join("")}</div>
+    </div></section>`;
+}
+
+function matches(t) {
+  const q = ui.q.trim().toLowerCase(), st = effStatus(t);
+  return (!ui.area || t.area === ui.area) && (!ui.owner || t.owner === ui.owner) && (!ui.status || st === ui.status) &&
+    (!ui.hideDone || st !== "done") && (!q || [t.id, t.title, t.notes, ...(t.links || [])].join(" ").toLowerCase().includes(q));
+}
+const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? "selected" : ""}>${esc(l)}</option>`;
+
+function renderChecklist() {
+  const filters = `<div class="filters">
+    <input type="search" id="f-q" placeholder="${T("search")}" aria-label="${T("searchAria")}" value="${esc(ui.q)}">
+    <select id="f-area" aria-label="${T("area")}">${opt("", T("allAreas"), ui.area)}${AREAS.map(a => opt(a, areaLabel(a), ui.area)).join("")}</select>
+    <select id="f-owner" aria-label="${T("owner")}">${opt("", T("bothOwners"), ui.owner)}${Object.entries(OWNERS).map(([k, l]) => opt(k, l, ui.owner)).join("")}</select>
+    <select id="f-status" aria-label="${T("status")}">${opt("", T("anyStatus"), ui.status)}${STATUS.map(s => opt(s.key, s.label, ui.status)).join("")}</select>
+    <label class="toggle"><input type="checkbox" id="f-hide" ${ui.hideDone ? "checked" : ""}> ${T("hideDone")}</label>
+    <button class="btn ghost" type="button" id="f-reset">${T("reset")}</button>
+  </div>`;
+  const groups = [...doc.milestones.map(m => ({ m, tasks: doc.tasks.filter(t => t.milestone === m.id) })),
+    { m: null, tasks: doc.tasks.filter(t => !t.milestone || !doc.milestones.some(m => m.id === t.milestone)) }];
+  const html = groups.filter(g => g.m || g.tasks.length).map(g => renderGroup(g.m, g.tasks)).join("");
+  return filters + html + `<button class="btn" type="button" id="add-ms">${T("addMs")}</button>`;
+}
+
+function renderGroup(m, tasks) {
+  const done = tasks.filter(t => effStatus(t) === "done").length, pct = tasks.length ? Math.round(100 * done / tasks.length) : 0;
+  const shown = tasks.filter(matches);
+  let due = "";
+  if (m && m.due) { const left = daysLeft(m.due); due = pct === 100 || left >= 0 ? `${pct === 100 ? "" : T("daysLeft", left)}${T("due", fmtDate(m.due))}` : `<span class="late">${T("overdue", -left)}</span>`; }
+  const key = m ? m.id : "_none";
+  const head = openEditor === "ms:" + key && m ? renderMsEditor(m) : `
+    <div><h3>${m ? esc(m.title) : T("noMs")}</h3>${m && m.description ? `<p>${esc(m.description)}</p>` : ""}</div>
+    <div class="side"><span class="mono">${done}/${tasks.length} · ${pct}%</span><span>${due}</span>${m ? `<button class="btn ghost" type="button" data-edit-ms="${esc(m.id)}">${T("edit")}</button>` : ""}</div>
+    <div class="bar"><i style="width:${pct}%;background:var(--accent)"></i></div>`;
+  return `<section class="group" aria-label="${m ? esc(m.title) : T("noMs")}">
+    <div class="group-head">${head}</div>
+    ${shown.length ? shown.map(renderRow).join("") : `<div class="empty">${tasks.length ? T("noMatch") : T("noTasks")}</div>`}
+    ${openEditor === "new:" + key ? `<div class="row"><span></span>${renderTaskEditor(null, m ? m.id : "")}</div>` : `<div class="add-row"><button class="btn ghost" type="button" data-add="${esc(key)}">${T("addTaskRow")}</button></div>`}
+  </section>`;
+}
+
+function renderRow(t) {
+  const st = effStatus(t), auto = derived[t.id]?.auto;
+  return `<div class="row ${st === "done" ? "is-done" : ""}">
+    <input type="checkbox" data-check="${esc(t.id)}" ${st === "done" ? "checked" : ""} ${auto ? "disabled" : ""} aria-label="${esc(T("markDoneAria", t.id))}" title="${esc(auto ? T("autoUpdated", auto) : T("markDone"))}">
+    <div style="min-width:0">
+      <button class="title" type="button" data-open="${esc(t.id)}">${esc(t.title)}</button>
+      <div class="chips">
+        <span class="id">${esc(t.id)}</span>
+        <span class="chip owner-${esc(t.owner)}">${OWNERS[t.owner] || esc(t.owner)}</span>
+        <span class="chip">${esc(areaLabel(t.area))}</span>
+        ${t.priority === "high" ? `<span class="chip pri-high">${priLabel("high")}</span>` : ""}
+        ${t.due && st !== "done" ? `<span class="${isLate(t) ? "late" : "muted"}">${T("due", fmtDate(t.due))}</span>` : ""}
+        ${st === "done" && t.done ? `<span class="muted">${T("doneOn", fmtDate(t.done))}</span>` : ""}
+        ${auto ? `<span class="chip auto">${T("auto")}</span>` : ""}
+      </div>
+    </div>
+    <div class="right"><select class="status-sel" data-status="${esc(t.id)}" aria-label="${esc(T("statusOf", t.id))}" style="color:var(--${st})" ${auto ? "disabled" : ""}>${STATUS.map(s => opt(s.key, s.label, st)).join("")}</select></div>
+    ${openEditor === "task:" + t.id ? renderTaskEditor(t) : ""}
+  </div>`;
+}
+
+function renderTaskEditor(t, msId) {
+  const v = t || { id: nextId(), title: "", milestone: msId, area: "macros", status: "todo", owner: "kaa", priority: "normal", due: "", notes: "", links: [] };
+  const d = t ? derived[t.id] : null;
+  return `<form class="editor" data-form="${t ? esc(t.id) : "new"}">
+    <label class="field"><span>${T("title")}</span><input type="text" name="title" value="${esc(v.title)}" required placeholder="${T("titlePh")}"></label>
+    <div class="grid2">
+      <label class="field"><span>${T("status")}</span><select name="status">${STATUS.map(s => opt(s.key, s.label, v.status)).join("")}</select></label>
+      <label class="field"><span>${T("owner")}</span><select name="owner">${Object.entries(OWNERS).map(([k, l]) => opt(k, l, v.owner)).join("")}</select></label>
+      <label class="field"><span>${T("area")}</span><select name="area">${AREAS.map(a => opt(a, areaLabel(a), v.area)).join("")}</select></label>
+      <label class="field"><span>${T("priority")}</span><select name="priority">${PRIORITIES.map(p => opt(p, priLabel(p), v.priority || "normal")).join("")}</select></label>
+      <label class="field"><span>${T("milestone")}</span><select name="milestone">${opt("", T("none"), v.milestone || "")}${doc.milestones.map(m => opt(m.id, m.title, v.milestone || "")).join("")}</select></label>
+      <label class="field"><span>${T("dueLabel")}</span><input type="date" name="due" value="${esc(v.due || "")}"></label>
+    </div>
+    <label class="field"><span>${T("notes")}</span><textarea name="notes" rows="2">${esc(v.notes || "")}</textarea></label>
+    <label class="field"><span>${T("links")}</span><input type="text" name="links" value="${esc((v.links || []).join(", "))}"></label>
+    ${t && (t.links || []).length ? `<div class="history">${t.links.map(l => `<a href="${esc(ghUrl(l))}" target="_blank" rel="noopener">${esc(l)}</a>`).join(" · ")}</div>` : ""}
+    ${d && d.auto ? `<div class="chips"><span class="chip auto">${esc(T("autoUpdated", d.auto))}</span></div>` : ""}
+    ${d ? `<div class="history"><span class="label">${esc(T("commitsMention", t.id))}</span>${d.commits.length ? `<ul>${d.commits.slice(0, 8).map(c => `<li><a class="mono" href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}/commit/${esc(c.sha)}" target="_blank" rel="noopener">${esc(c.short)}</a> ${esc(c.subject)}</li>`).join("")}</ul>` : `<div class="muted">${T("noCommitsYet", esc(t.id))}</div>`}</div>` : ""}
+    <div class="actions">
+      <div style="display:flex;gap:8px"><button class="btn primary" type="submit">${t ? T("save") : T("addTask")}</button><button class="btn" type="button" data-cancel>${T("cancel")}</button></div>
+      ${t ? `<button class="btn danger" type="button" data-delete="${esc(t.id)}" data-armed="0">${T("deleteTask")}</button>` : `<span class="id">${esc(v.id)}</span>`}
+    </div>
+  </form>`;
+}
+
+function renderMsEditor(m) {
+  return `<form class="editor" data-ms-form="${esc(m.id)}" style="grid-column:1/-1;margin:0">
+    <div class="grid2">
+      <label class="field"><span>${T("title")}</span><input type="text" name="title" value="${esc(m.title)}" required></label>
+      <label class="field"><span>${T("dueLabel")}</span><input type="date" name="due" value="${esc(m.due || "")}"></label>
+    </div>
+    <label class="field"><span>${T("description")}</span><textarea name="description" rows="2">${esc(m.description || "")}</textarea></label>
+    <div class="actions"><div style="display:flex;gap:8px"><button class="btn primary" type="submit">${T("save")}</button><button class="btn" type="button" data-cancel>${T("cancel")}</button></div><span class="id">${esc(m.id)}</span></div>
+  </form>`;
+}
+
+function renderMacros() {
+  const list = macros();
+  if (!list.length) return `<div class="note" style="margin-top:14px">${T("noMacros")}</div>`;
+  const st = (on, l) => `<span class="stage ${on ? "on" : "off"}" title="${l}: ${on ? T("stageDone") : T("stageMissing")}">${on ? "✓" : "·"}</span>`;
+  return `<div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>${T("macro")}</th><th>${T("schema")}</th><th>${T("card")}</th><th>${T("diagram")}</th><th>${T("reviewed")}</th><th>${T("progress")}</th></tr></thead><tbody>
+    ${list.map(m => `<tr><td class="mono"><a href="${esc(ghUrl(m.dir))}" target="_blank" rel="noopener">%${esc(m.name)}</a></td>
+      <td>${st(m.stages.schema, T("schema"))}</td><td>${st(m.stages.card, T("card"))}</td><td>${st(m.stages.diagram, T("diagram"))}</td><td>${st(m.stages.reviewed, T("reviewed"))}</td>
+      <td style="min-width:140px"><div class="bar"><i style="width:${m.progress}%;background:var(--accent)"></i></div><span class="mono muted" style="font-size:12px">${m.progress}%</span></td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+/* AI-marked files that are only in a branch so far (a design or a document waiting for review in a PR).
+ * On a preview: that branch; on the live page: every roadmap-* branch (up to 10). Compared with the data branch. */
+async function loadBranchReview() {
+  try {
+    let names = DEFAULTS.preview ? [DEFAULTS.preview]
+      : (await gh(`${repoPath()}/branches?per_page=100`)).map(b => b.name).filter(n => /^roadmap-/.test(n)).slice(0, 10);
+    names = names.filter(n => n !== cfg.branch);
+    const found = await pool(names, 4, async branch => {
+      const cmp = await gh(`${repoPath()}/compare/${encodeURIComponent(cfg.branch)}...${encodeURIComponent(branch)}`).catch(() => null);
+      const changed = ((cmp && cmp.files) || []).filter(f => f.status !== "removed" && SCAN_EXT.test(f.filename) && !SKIP.test(f.filename));
+      const heads = await pool(changed, 4, async f => {
+        const text = await gh(`${repoPath()}/contents/${f.filename.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch)}`, { raw: true }).catch(() => null);
+        return text == null ? "" : String(text).slice(0, HEAD_LEN);
+      });
+      const files = changed.filter((f, i) => heads[i].includes(AI_MARK) || /"reviewedByHuman"\s*:\s*false/.test(heads[i])).map(f => f.filename);
+      return { branch, files };
+    });
+    branchReview = found.filter(x => x.files.length);
+  } catch { branchReview = []; }
+}
+const branchFileUrl = (branch, path) => `https://github.com/${cfg.owner}/${cfg.repo}/blob/${encodeURIComponent(branch)}/${path}`;
+function renderReview() {
+  const q = reviewQueue();
+  const inBranches = branchReview.map(x => `
+    <h3 class="rv-branch">${T("reviewBranch", esc(x.branch))}</h3>
+    <div class="table-wrap"><table><thead><tr><th>${T("file")}</th><th>${T("folder")}</th></tr></thead><tbody>
+    ${x.files.map(p => `<tr><td class="mono" style="font-size:13px"><a href="${esc(branchFileUrl(x.branch, p))}" target="_blank" rel="noopener">${esc(p)}</a></td><td class="muted">${esc(p.includes("/") ? p.split("/")[0] : T("root"))}</td></tr>`).join("")}
+    </tbody></table></div>`).join("");
+  if (!q.length) return `<div class="note" style="margin-top:14px">${T("allReviewed")}</div>${inBranches}`;
+  return `<div class="note" style="margin:14px 0 12px">${T("reviewNote", AI_MARK)}</div>
+    <div class="table-wrap"><table><thead><tr><th>${T("file")}</th><th>${T("folder")}</th></tr></thead><tbody>
+    ${q.map(p => `<tr><td class="mono" style="font-size:13px"><a href="${esc(ghUrl(p))}" target="_blank" rel="noopener">${esc(p)}</a></td><td class="muted">${esc(p.includes("/") ? p.split("/")[0] : T("root"))}</td></tr>`).join("")}
+    </tbody></table></div>${inBranches}`;
+}
+
+function renderActivity() {
+  if (!commits.length) return `<div class="note" style="margin-top:14px">${T("noCommits")}</div>`;
+  return `<div class="feed" style="margin-top:14px">${commits.slice(0, 50).map(c => `<div>
+    <a class="mono" href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}/commit/${esc(c.sha)}" target="_blank" rel="noopener">${esc(c.short)}</a>
+    <span class="subj">${esc(c.subject)} ${c.refs.map(r => `<button class="chip" type="button" data-jump="${esc(r)}" style="border:0;cursor:pointer">${esc(r)}</button>`).join(" ")}</span>
+    <span class="muted mono" style="font-size:12px">${fmtDate(c.date)}</span></div>`).join("")}</div>`;
+}
+
+function renderSavebar() {
+  const bar = $("savebar");
+  let html = "";
+  if (saving) html = `<span>${T("saving")}</span>`;
+  else if (saveError) html = `<span>${esc(saveError)}</span><button class="btn" type="button" id="sb-retry">${T("retry")}</button>`;
+  else if (pending.length) html = `<span>${T("pending", pending.length)}</span><button class="btn" type="button" id="sb-now">${T("saveNow")}</button>`;
+  else if (lastSave && Date.now() - lastSave.at < 8000) html = `<span>${T("savedCommit")} <a class="mono" href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}/commit/${esc(lastSave.sha)}" target="_blank" rel="noopener">${esc(lastSave.short)}</a></span>`;
+  bar.hidden = !html; bar.innerHTML = html;
+  $("sb-retry") && ($("sb-retry").onclick = () => { saveError = null; save(); });
+  $("sb-now") && ($("sb-now").onclick = () => { clearTimeout(saveTimer); save(); });
+  clearTimeout(savebarTimer);
+  if (html && lastSave && !saving && !saveError && !pending.length) savebarTimer = setTimeout(renderSavebar, 8200);
+}
+
+function renderConnect(fromSettings) {
+  renderMeta();
+  $("main").innerHTML = `<section class="panel connect">
+    <h2>${fromSettings ? T("settings") : T("connect")}</h2>
+    ${inFrame ? `<div class="error">${T("inFrame")}</div>` : ""}
+    <p class="muted" style="margin:0">${T("connectIntro", TASKS_PATH)}</p>
+    <ol>
+      <li>${T("step1")}</li>
+      <li>${T("step2", esc(cfg.repo))}</li>
+      <li>${T("step3")}</li>
+      <li>${T("step4")}</li>
+    </ol>
+    <form id="connect-form" class="editor" style="margin:0">
+      <div class="grid2">
+        <label class="field"><span>${T("ownerField")}</span><input type="text" id="c-owner" value="${esc(cfg.owner)}" required></label>
+        <label class="field"><span>${T("repoField")}</span><input type="text" id="c-repo" value="${esc(cfg.repo)}" required></label>
+        <label class="field"><span>${T("branchField")}</span><input type="text" id="c-branch" value="${esc(cfg.branch)}" required></label>
+      </div>
+      <label class="field"><span>${T("token")}</span><input type="password" id="c-token" value="${esc(cfg.token || "")}" placeholder="github_pat_…" autocomplete="off" required></label>
+      <label class="toggle"><input type="checkbox" id="c-remember" ${store.get("token", null) || !cfg.token ? "checked" : ""}> ${T("remember")}</label>
+      <div class="actions"><div style="display:flex;gap:8px"><button class="btn primary" type="submit">${T("connectBtn")}</button>${fromSettings ? `<button class="btn" type="button" id="c-cancel">${T("cancel")}</button>` : ""}</div>
+        ${cfg.token ? `<button class="btn danger" type="button" id="c-forget">${T("forget")}</button>` : ""}</div>
+    </form></section>`;
+  onForm($("connect-form"), () => {
+    Object.assign(cfg, { owner: $("c-owner").value.trim(), repo: $("c-repo").value.trim(), branch: $("c-branch").value.trim(), token: $("c-token").value.trim() });
+    store.set(CFG_KEY, { owner: cfg.owner, repo: cfg.repo, branch: cfg.branch });
+    if ($("c-remember").checked) store.set("token", cfg.token); else { store.set("token", null); try { sessionStorage.setItem("roadmap:token", cfg.token); } catch {} }
+    doc = null; load();
+  });
+  $("c-cancel") && ($("c-cancel").onclick = render);
+  $("c-forget") && ($("c-forget").onclick = () => { store.set("token", null); try { sessionStorage.removeItem("roadmap:token"); } catch {} cfg.token = null; doc = null; render(); });
+}
+
+/* ---------- events ---------- */
+// Sandboxed frames without "allow-forms" never fire submit, so every form is also driven by its button's click.
+function onForm(form, handler) {
+  const run = e => { e.preventDefault(); if (form.reportValidity()) handler(form); };
+  form.addEventListener("submit", run);
+  form.querySelectorAll('[type="submit"]').forEach(b => b.addEventListener("click", run));
+}
+const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
+function bind() {
+  const root = $("main");
+  root.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { ui.tab = b.dataset.tab; openEditor = null; render(); });
+  root.querySelectorAll("[data-count]").forEach(b => b.onclick = () => { ui.status = ui.status === b.dataset.count ? "" : b.dataset.count; ui.tab = "checklist"; render(); });
+  if (ui.tab === "checklist") {
+    $("f-q").oninput = e => { ui.q = e.target.value; const pos = e.target.selectionStart; render(); $("f-q").focus(); $("f-q").setSelectionRange(pos, pos); };
+    ["area", "owner", "status"].forEach(k => $("f-" + k).onchange = e => { ui[k] = e.target.value; render(); });
+    $("f-hide").onchange = e => { ui.hideDone = e.target.checked; render(); };
+    $("f-reset").onclick = () => { Object.assign(ui, { q: "", area: "", owner: "", status: "", hideDone: false }); render(); };
+    $("add-ms").onclick = () => {
+      const n = Math.max(0, ...doc.milestones.map(m => parseInt(String(m.id).slice(1), 10) || 0)) + 1;
+      const ms = { id: "m" + n, title: T("newMs") };
+      edit({ type: "add-ms", ms }); openEditor = "ms:" + ms.id; render();
+    };
+  }
+  root.querySelectorAll("[data-check]").forEach(cb => cb.onchange = () => {
+    const done = cb.checked;
+    edit({ type: "task", id: cb.dataset.check, fields: { status: done ? "done" : "todo", done: done ? today() : "" } });
+  });
+  root.querySelectorAll("[data-status]").forEach(sel => sel.onchange = () => {
+    const s = sel.value;
+    edit({ type: "task", id: sel.dataset.status, fields: { status: s, done: s === "done" ? today() : "" } });
+  });
+  root.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { openEditor = openEditor === "task:" + b.dataset.open ? null : "task:" + b.dataset.open; render(); });
+  root.querySelectorAll("[data-add]").forEach(b => b.onclick = () => { openEditor = "new:" + b.dataset.add; render(); root.querySelector('[data-form="new"] input[name="title"]')?.focus(); });
+  root.querySelectorAll("[data-edit-ms]").forEach(b => b.onclick = () => { openEditor = "ms:" + b.dataset.editMs; render(); });
+  root.querySelectorAll("[data-cancel]").forEach(b => b.onclick = () => { openEditor = null; render(); });
+  root.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => { ui.tab = "checklist"; Object.assign(ui, { q: "", status: "", area: "", owner: "", hideDone: false }); openEditor = "task:" + b.dataset.jump; render(); });
+  root.querySelectorAll("[data-delete]").forEach(b => b.onclick = () => {
+    if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = T("confirmDelete"); return; }
+    edit({ type: "delete-task", id: b.dataset.delete }); openEditor = null; render();
+  });
+  root.querySelectorAll("[data-form]").forEach(f => onForm(f, () => {
+    const fd = new FormData(f), id = f.dataset.form;
+    const fields = {
+      title: fd.get("title").trim(), status: fd.get("status"), owner: fd.get("owner"), area: fd.get("area"),
+      priority: fd.get("priority") === "normal" ? "" : fd.get("priority"), milestone: fd.get("milestone"), due: fd.get("due"),
+      notes: fd.get("notes").trim(), links: fd.get("links").split(",").map(s => s.trim()).filter(Boolean)
+    };
+    if (!fields.title) return;
+    if (id === "new") {
+      edit({ type: "add-task", task: clean({ id: nextId(), ...fields, created: today(), done: fields.status === "done" ? today() : "" }) });
+    } else {
+      const t = doc.tasks.find(x => x.id === id);
+      if (fields.status === "done" && t.status !== "done") fields.done = today();
+      if (fields.status !== "done") fields.done = "";
+      edit({ type: "task", id, fields });
+    }
+    openEditor = null; render();
+  }));
+  root.querySelectorAll("[data-ms-form]").forEach(f => onForm(f, () => {
+    const fd = new FormData(f);
+    edit({ type: "ms", id: f.dataset.msForm, fields: { title: fd.get("title").trim(), due: fd.get("due"), description: fd.get("description").trim() } });
+    openEditor = null; render();
+  }));
+}
+
+function showCrash(msg) {
+  const box = document.createElement("div");
+  box.className = "error"; box.style.marginTop = "12px";
+  box.textContent = T("crash", msg);
+  $("main").prepend(box);
+}
+// only this page's own scripts may raise the crash banner; errors from browser extensions or a host frame's injected code are ignored
+const ownScript = f => !f || f.split("#")[0] === location.href.split("#")[0] || /\/js-yaml\.min\.js$/.test(f);
+window.addEventListener("error", e => { if (ownScript(e.filename)) showCrash(e.message || "script error"); });
+window.addEventListener("unhandledrejection", e => showCrash(e.reason && e.reason.message || String(e.reason)));
+
+if (typeof jsyaml === "undefined") {
+  $("main").innerHTML = `<div class="error">${T("noYaml")}</div>`;
+} else {
+  render();
+  load();
+}
+</script>
+</body>
+</html>
