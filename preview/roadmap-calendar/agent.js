@@ -20,7 +20,9 @@ const C = window.RoadmapCore;
 const SCHEMA = C.agentSchema();
 const JOURNAL_PATH = C.AGENT_JOURNAL_PATH;
 const JOURNAL_HEAD = C.AGENT_JOURNAL_HEAD;
-const DEFAULT_SETTINGS = { orKey: "", model: "openrouter/free", fallbacks: "", groqKey: "", groqModel: "llama-3.3-70b-versatile" };
+// Groq shut llama-3.3-70b-versatile down on 2026-08-16; openai/gpt-oss-120b is its replacement (console.groq.com/docs/deprecations)
+const DEFAULT_SETTINGS = { orKey: "", model: "openrouter/free", fallbacks: "", groqKey: "", groqModel: "openai/gpt-oss-120b" };
+const RETIRED_GROQ = ["llama-3.3-70b-versatile"];
 
 /* ---------- texts ---------- */
 Object.assign(I18N.en, {
@@ -64,6 +66,7 @@ Object.assign(I18N.ru, {
 
 /* ---------- state ---------- */
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get("agent", {}));
+if (RETIRED_GROQ.includes(settings.groqModel)) settings.groqModel = DEFAULT_SETTINGS.groqModel;   // a saved retired model would only fail
 let thread = [];        // { role: "user", text } | { role: "agent", data, model, picks: bool[], titles: string[], state: "open"|"applied"|"dismissed", results } | { role: "error", text }
 let busy = false, view = "chat", promptText = null;
 
