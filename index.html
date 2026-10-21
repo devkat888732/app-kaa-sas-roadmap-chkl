@@ -259,6 +259,7 @@ tbody tr:last-child td { border-bottom: 0; }
       <h1>SAS kaa <span>Roadmap</span></h1>
     </div>
     <div class="side">
+      <button class="btn ghost" type="button" id="focus-show" hidden></button>
       <div class="meta" id="meta"></div>
       <div class="pv-pop" id="pv-pop" role="dialog" aria-labelledby="pv-title" hidden></div>
       <label class="skin" for="lang"><span id="lang-label">Language</span>
@@ -347,7 +348,7 @@ const I18N = {
     "noMacros": "No macros documented yet. Each folder in <code>macros/&lt;name&gt;/</code> appears here with its pipeline: schema → card → diagram → reviewed by a human. Stages are read from the files in the repo.",
     "macro": "Macro", "schema": "Schema", "card": "Card", "diagram": "Diagram", "reviewed": "Reviewed", "stageDone": "done", "stageMissing": "missing",
     "allReviewed": "Every AI-generated file has been reviewed.",
-    "focus.title": "Review first", "focus.count": (f, b) => `${f} files, ${b} branches`, "focus.files": "Files", "focus.branches": "Branches (PRs)", "focus.hide": "Hide until the list changes",
+    "focus.title": "Review first", "focus.count": (f, b) => `${f} files, ${b} branches`, "focus.files": "Files", "focus.branches": "Branches (PRs)", "focus.hide": "Hide until the list changes (🔥 at the top brings it back)", "focus.show": "show",
     "reviewNote": mark => `AI-generated files still marked <code>${mark}</code>. After reviewing a file, change its mark to “reviewed by a human, YYYY-MM-DD”; it leaves this list on the next refresh.`,
     "file": "File", "folder": "Folder", "root": "root", "noCommits": "No commits found.",
     "saving": "Saving to GitHub…", "retry": "Retry", "pending": n => `${n} change${n > 1 ? "s" : ""} · saving in a moment`, "saveNow": "Save now", "savedCommit": "Saved · commit",
@@ -403,7 +404,7 @@ const I18N = {
     "noMacros": "Пока нет описанных макросов. Каждая папка <code>macros/&lt;имя&gt;/</code> появится здесь со своим конвейером: схема → карточка → диаграмма → проверено человеком. Этапы определяются по файлам в репозитории.",
     "macro": "Макрос", "schema": "Схема", "card": "Карточка", "diagram": "Диаграмма", "reviewed": "Проверено", "stageDone": "есть", "stageMissing": "нет",
     "allReviewed": "Все файлы, созданные ИИ, проверены.",
-    "focus.title": "На ревью в первую очередь", "focus.count": (f, b) => `${f} ${plural(f, "файл", "файла", "файлов")}, ${b} ${plural(b, "ветка", "ветки", "веток")}`, "focus.files": "Файлы", "focus.branches": "Ветки (PR)", "focus.hide": "Скрыть, пока список не поменяется",
+    "focus.title": "На ревью в первую очередь", "focus.count": (f, b) => `${f} ${plural(f, "файл", "файла", "файлов")}, ${b} ${plural(b, "ветка", "ветки", "веток")}`, "focus.files": "Файлы", "focus.branches": "Ветки (PR)", "focus.hide": "Скрыть, пока список не поменяется (вернуть — 🔥 вверху)", "focus.show": "показать",
     "reviewNote": mark => `Файлы, созданные ИИ, у которых ещё стоит пометка <code>${mark}</code>. После проверки замените пометку на «reviewed by a human, ГГГГ-ММ-ДД» — при следующем обновлении файл уйдёт из списка.`,
     "file": "Файл", "folder": "Папка", "root": "корень", "noCommits": "Коммитов не найдено.",
     "saving": "Сохраняю в GitHub…", "retry": "Повторить", "pending": n => `${n} ${plural(n, "изменение", "изменения", "изменений")} · сохраню через мгновение`, "saveNow": "Сохранить сейчас", "savedCommit": "Сохранено · коммит",
@@ -461,7 +462,7 @@ function applySkin(k) {
 applySkin(store.get("skin", null));
 $("skin").onchange = e => { const k = e.target.value || null; store.set("skin", k); applySkin(k); };
 applyLangStatic();
-$("lang").onchange = e => { lang = LANGS.includes(e.target.value) ? e.target.value : "en"; store.set("lang", lang); applyLangStatic(); derive(); render(); renderPreviews(); };
+$("lang").onchange = e => { lang = LANGS.includes(e.target.value) ? e.target.value : "en"; store.set("lang", lang); applyLangStatic(); derive(); render(); renderPreviews(); renderFocusBanner(); };
 
 /* ---------- GitHub API ---------- */
 async function gh(path, { method = "GET", body, raw = false } = {}) {
@@ -648,7 +649,15 @@ const ghPr = (repo, n) => `https://github.com/${repo}/pull/${n}`;
 function renderFocusBanner() {
   const el = $("focus-banner");
   const f = reviewFocus, n = f ? f.files.length + f.branches.length : 0;
-  if (!n || store.get("focusHidden", "") === f.updated) { el.hidden = true; return; }
+  const show = $("focus-show");
+  const hidden = n && store.get("focusHidden", "") === f.updated;
+  show.hidden = !hidden;
+  if (hidden) {
+    show.textContent = `🔥 ${n}`;
+    show.title = `${T("focus.title")} — ${T("focus.show")}`; show.setAttribute("aria-label", show.title);
+    show.onclick = () => { store.set("focusHidden", ""); store.set("focusOpen", true); renderFocusBanner(); };
+  }
+  if (!n || hidden) { el.hidden = true; return; }
   const repoName = r => String(r || "").split("/").pop();
   el.hidden = false;
   el.innerHTML = `<details${store.get("focusOpen", false) ? " open" : ""}><summary>🔥 <span>${T("focus.title")}: <b>${T("focus.count", f.files.length, f.branches.length)}</b></span>
@@ -658,7 +667,7 @@ function renderFocusBanner() {
   </details>`;
   const d = el.querySelector("details");
   d.addEventListener("toggle", () => store.set("focusOpen", d.open));
-  el.querySelector("[data-fx]").onclick = e => { e.preventDefault(); store.set("focusHidden", f.updated); el.hidden = true; };
+  el.querySelector("[data-fx]").onclick = e => { e.preventDefault(); store.set("focusHidden", f.updated); renderFocusBanner(); };
 }
 
 async function load() {
