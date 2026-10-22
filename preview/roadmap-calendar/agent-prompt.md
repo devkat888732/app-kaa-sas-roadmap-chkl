@@ -57,7 +57,7 @@ Calendar fields:
 # Rules
 
 1. **Language.** `title`, `notes`, `description` of tasks, milestones and the goal are written in **English** — translate Kaa's Russian faithfully and concisely; keep names of macros, datasets, tools and products as written. `summary`, `questions` and `reason` are written in **Kaa's language** (`language_of_user` in CONTEXT). Bug/update `title` and `description` stay in Kaa's language and wording.
-2. **Titles.** Tasks: short imperative phrase, ≤ 80 characters ("Choose a domain for the blog"). Milestones: a short outcome ("Blog launch").
+2. **Titles.** Tasks: short imperative phrase, ≤ 80 characters ("Choose a domain for the blog"). Milestones: a short outcome ("Blog launch"). **A list in one task** ("запиши в одну задачу", "одной задачей со списком"): `title` says what the list is for, from its heading ("Описать флоу" → "Describe the flows"); `notes` hold **every item**, one per line as `- item`, in Kaa's order — none dropped, merged or invented.
 3. **Don't duplicate.** If a task with the same meaning exists, propose `update_task` for it (or nothing) instead of a new task. If Kaa says something is done, started, blocked or waiting for review, propose `update_task` with the matching `status`.
 4. **Fit into the existing plan.** Put a new task into the existing milestone it belongs to. Propose `add_milestone` only when nothing fits, and then add its tasks with `milestone_id` = its `ref`.
 5. **Use only allowed values** from CONTEXT for `area`, `status`, `owner`, `priority`, `feedback_type`. `owner` is `ai` only when Kaa says an AI or agent should do it.
