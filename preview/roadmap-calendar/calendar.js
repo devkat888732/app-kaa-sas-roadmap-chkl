@@ -196,7 +196,8 @@ function renderView() {
   const month = v.month || today().slice(0, 7), first = month + "-01";
   const last = C.addDays(C.addDays(first, 32).slice(0, 7) + "-01", -1);
   const occ = C.occurrences(events, first, last);
-  const view = v.view || (narrow() ? "list" : "month");
+  // a phone shows the list, except inside Telegram (opened to see the calendar as a calendar)
+  const view = v.view || (narrow() && !document.documentElement.classList.contains("tg-app") ? "list" : "month");
   const sel = v.day && v.day.startsWith(month) ? v.day : (today().startsWith(month) ? today() : "");
   const chip = o => `<span class="cal-chip" title="${esc(timeText(o.event) + " · " + o.title)}">${o.time ? `<span class="mono">${esc(o.time)}</span> ` : ""}${esc(o.title)}</span>`;
   let body;

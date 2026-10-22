@@ -10,6 +10,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <!-- js-yaml 4.1.0 is bundled next to the page (cdnjs is behind Cloudflare, which is throttled in Russia). -->
 <script src="js-yaml.min.js"></script>
+<!-- Opened from the Штаб bot as a Telegram Mini App (?tg=1): Telegram's script, loaded first so it reads its launch data
+     from the address before the page changes it. Only then — the page itself doesn't need it. -->
+<script>if (/[?&]tg=1(&|$)/.test(location.search)) { document.documentElement.classList.add("tg-app"); document.write('<script src="https://telegram.org/js/telegram-web-app.js"><\/script>'); }</script>
 <!-- pure logic shared with the Штаб bot: roadmap/core/ (copied into the site by build.py) -->
 <script src="core/common.js"></script>
 <script src="core/tasks.js"></script>
@@ -108,6 +111,10 @@ a { color: var(--accent); }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 96px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+/* inside Telegram: the week and the tabs first — the header's controls, the progress panels and the review banner stay on the site */
+.tg-app .wrap { padding-block: 10px 40px; gap: 12px; }
+.tg-app header .side, .tg-app .summary, .tg-app .focus-banner, .tg-app #focus-banner, .tg-app .preview-banner { display: none !important; }
+.tg-app header h1 { font-size: 22px; }
 #main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
@@ -359,7 +366,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "6ba3199", "preview": "roadmap-calendar"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "1f0fa8b", "preview": "roadmap-calendar"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -538,6 +545,10 @@ const cfg = Object.assign({}, DEFAULTS, store.get(CFG_KEY, {}), { token: store.g
 function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); } catch { return null; } }
 const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false, rm: false }, store.get("ui", {}));
 if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
+/* ?tab=calendar opens a tab (the bot's «📅 Открыть календарь»); in Telegram (?tg=1) the page fits the app:
+ * Telegram's light / dark when no theme was chosen here, full height, no address-bar tab hash (Telegram keeps its own) */
+const TG_APP = document.documentElement.classList.contains("tg-app");
+{ const t = new URLSearchParams(location.search).get("tab"); if (TABS.some(x => x.key === t)) ui.tab = t; }
 let reviewFocus = null;   // roadmap/review-focus__ai.yaml: { updated, files, branches }
 let doc = null, header = "", fileSha = null, tree = [], treeTruncated = false, commits = [], contents = {}, derived = {};
 let pending = [], saveTimer = null, savebarTimer = null, saving = false, lastSave = null, saveError = null, openEditor = null, loadError = null, loading = false;
@@ -549,7 +560,8 @@ function applySkin(k) {
   else document.documentElement.removeAttribute("data-skin");
   $("skin").value = SKINS.includes(k) ? k : "";
 }
-applySkin(store.get("skin", null));
+applySkin(store.get("skin", null) || (TG_APP && window.Telegram && Telegram.WebApp && Telegram.WebApp.colorScheme === "dark" ? "teal" : null));
+if (TG_APP && window.Telegram && Telegram.WebApp) { try { Telegram.WebApp.ready(); Telegram.WebApp.expand(); } catch {} }
 $("skin").onchange = e => { const k = e.target.value || null; store.set("skin", k); applySkin(k); };
 applyLangStatic();
 $("lang").onchange = e => { lang = LANGS.includes(e.target.value) ? e.target.value : "en"; store.set("lang", lang); applyLangStatic(); derive(); render(); renderPreviews(); renderFocusBanner(); };
@@ -789,7 +801,7 @@ const isLate = t => t.due && effStatus(t) !== "done" && t.due < today();
 function render() {
   store.set("ui", ui);
   // sandboxed previews (e.g. opaque-origin iframes) refuse URL changes; the tab hash is only a convenience
-  try { if (location.hash.slice(1) !== ui.tab) history.replaceState(null, "", "#" + ui.tab); } catch {}
+  try { if (!TG_APP && location.hash.slice(1) !== ui.tab) history.replaceState(null, "", "#" + ui.tab); } catch {}
   renderMeta(); renderSavebar();
   if (!cfg.token) return renderConnect();
   if (!doc) {
@@ -1222,6 +1234,7 @@ function bind() {
   if (ui.tab === "feedback" && window.FB) FB.bindView(root);
   if (ui.tab === "ideas" && window.IDEAS) IDEAS.bindView(root);
   if (ui.tab === "calendar" && window.CAL) CAL.bindView(root);
+  if (TG_APP) root.querySelector('.tabs [aria-selected="true"]')?.scrollIntoView({ inline: "center", block: "nearest" });
   if (window.CAL) CAL.bindWeek(root);
 }
 
