@@ -39,7 +39,7 @@ Object.assign(I18N.en, {
   "fb.saving": "Saving…", "fb.saved": id => `Saved ${id}`, "fb.savedEdits": "Changes saved", "fb.copy": "Copy id", "fb.copied": "Copied", "fb.open": "Open",
   "fb.retry": "Retry", "fb.loadErr": "Couldn't load the feedback log: ",
   "fb.c.page": "Page", "fb.c.branch": "Branch", "fb.c.build": "Build", "fb.c.viewport": "Screen", "fb.c.theme": "Theme", "fb.c.lang": "Language", "fb.c.user_agent": "Browser",
-  "fb.t.bug": "Bug", "fb.t.update": "Update",
+  "fb.t.bug": "Bug", "fb.t.update": "Update", "fb.comp": "About", "fb.cp.site": "🌐 Site", "fb.cp.bot": "🤖 Bot", "fb.cp.both": "🌐🤖 Both", "fb.cp.none": "—", "fb.v.anyComp": "Site and bot", "fb.f.component": "About",
   "fb.st.new": "New", "fb.st.accepted": "Accepted", "fb.st.in-progress": "In progress", "fb.st.in-review": "In review", "fb.st.done": "Done", "fb.st.rejected": "Rejected", "fb.st.duplicate": "Duplicate",
   "fb.v.project": "Project", "fb.v.allProjects": "All projects", "fb.v.anyType": "Any type", "fb.v.open": "Open", "fb.v.all": "Any status", "fb.v.anyPriority": "Any priority",
   "fb.v.search": "Search id, title, description, place", "fb.v.csvAll": "CSV: all items", "fb.v.csvFiltered": "CSV: this filter",
@@ -71,7 +71,7 @@ Object.assign(I18N.ru, {
   "fb.saving": "Сохраняю…", "fb.saved": id => `Сохранено: ${id}`, "fb.savedEdits": "Изменения сохранены", "fb.copy": "Копировать id", "fb.copied": "Скопировано", "fb.open": "Открыть",
   "fb.retry": "Повторить", "fb.loadErr": "Не удалось загрузить журнал багов и апдейтов: ",
   "fb.c.page": "Страница", "fb.c.branch": "Ветка", "fb.c.build": "Сборка", "fb.c.viewport": "Экран", "fb.c.theme": "Тема", "fb.c.lang": "Язык", "fb.c.user_agent": "Браузер",
-  "fb.t.bug": "Баг", "fb.t.update": "Апдейт",
+  "fb.t.bug": "Баг", "fb.t.update": "Апдейт", "fb.comp": "Относится к", "fb.cp.site": "🌐 Сайт", "fb.cp.bot": "🤖 Бот", "fb.cp.both": "🌐🤖 Оба", "fb.cp.none": "—", "fb.v.anyComp": "Сайт и бот", "fb.f.component": "Относится к",
   "fb.st.new": "Новый", "fb.st.accepted": "Принят", "fb.st.in-progress": "В работе", "fb.st.in-review": "На проверке", "fb.st.done": "Готово", "fb.st.rejected": "Отклонён", "fb.st.duplicate": "Дубликат",
   "fb.v.project": "Проект", "fb.v.allProjects": "Все проекты", "fb.v.anyType": "Любой тип", "fb.v.open": "Открытые", "fb.v.all": "Любой статус", "fb.v.anyPriority": "Любой приоритет",
   "fb.v.search": "Поиск по id, названию, описанию, месту", "fb.v.csvAll": "CSV: все пункты", "fb.v.csvFiltered": "CSV: по фильтру",
@@ -92,7 +92,9 @@ Object.assign(I18N.ru, {
 /* ---------- data: this project's items (master copy) + the merged copy of all projects ---------- */
 let own = null, ownHead = "", ownSha = null, others = [], othersLoaded = false, loadErr = null;
 let pending = [], saving = false, saveTimer = null, saveErr = null, openId = null;
-const v = Object.assign({ project: "", type: "", status: "open", priority: "", q: "", sort: "created", dir: "desc" }, store.get("fbView", {}));
+const v = Object.assign({ project: "", type: "", component: "", status: "open", priority: "", q: "", sort: "created", dir: "desc" }, store.get("fbView", {}));
+const COMPS = RoadmapCore.FEEDBACK_COMPONENTS;
+const compIcon = c => c === "site" ? "🌐" : c === "bot" ? "🤖" : c === "both" ? "🌐🤖" : "";
 
 const asText = C.asText;
 const parseItems = C.parseFeedback;
@@ -428,6 +430,7 @@ function renderForm(error) {
     <label class="field"><span>${T("fb.title")}</span><input type="text" id="fb-title" maxlength="100" required value="${esc(d.title)}" placeholder="${bug ? T("fb.titlePhBug") : T("fb.titlePhUpdate")}"></label>
     <span class="fb-count" id="fb-count">${d.title.length}/100</span>
     <label class="field"><span>${T("fb.desc")}</span><textarea id="fb-desc" rows="5" required placeholder="${esc(bug ? T("fb.descPhBug") : T("fb.descPhUpdate"))}">${esc(d.description)}</textarea></label>
+    <label class="field"><span>${T("fb.comp")}</span><select id="fb-comp">${COMPS.map(c => `<option value="${c}" ${c === (d.component || "site") ? "selected" : ""}>${esc(T("fb.cp." + c))}</option>`).join("")}</select></label>
     <label class="field"><span>${T("fb.priority")}</span><select id="fb-pri">${["high", "normal", "low"].map(p => `<option value="${p}" ${p === d.priority ? "selected" : ""}>${esc(T("pri." + p))}</option>`).join("")}</select></label>
     <details class="fb-ctx"><summary>${T("fb.ctx")}</summary><dl>${Object.entries(ctx).map(([k, val]) => `<dt>${T("fb.c." + k)}</dt><dd>${esc(val)}</dd>`).join("")}</dl></details>
     ${error ? `<div class="fb-err">${esc(error)}</div>` : ""}
@@ -440,6 +443,7 @@ function renderForm(error) {
   form.querySelector("#fb-title").oninput = e => { upd({ title: e.target.value }); modal.querySelector("#fb-count").textContent = `${e.target.value.length}/100`; };
   form.querySelector("#fb-desc").oninput = e => upd({ description: e.target.value });
   form.querySelector("#fb-pri").onchange = e => upd({ priority: e.target.value });
+  form.querySelector("#fb-comp").onchange = e => upd({ component: e.target.value });
   form.querySelectorAll("[data-type]").forEach(b => b.onclick = () => { upd({ type: b.dataset.type }); renderForm(); });
   form.querySelector('[data-act="change"]').onclick = () => { const t = getDraft().type; closeForm(); startPick(t); };
   form.querySelector('[data-act="close"]').onclick = closeForm;
@@ -454,7 +458,7 @@ function submitForm() {
   if (!d.title.trim() || !d.description.trim()) return renderForm(T("fb.required"));
   if (!own || !cfg.token) return renderForm(T("fb.notLoaded"));
   const now = nowMsk(), ctx = context();
-  const item = { id: nextId(own, d.type), project: PROJECT, type: d.type, status: "new", priority: d.priority || "normal",
+  const item = { id: nextId(own, d.type), project: PROJECT, type: d.type, component: d.component || "site", status: "new", priority: d.priority || "normal",
     title: d.title.trim().slice(0, 100), description: d.description.trim(), location: d.location, anchor: d.anchor, selector: d.selector,
     page: d.page || ctx.page, branch: ctx.branch, build: ctx.build, viewport: ctx.viewport, theme: ctx.theme, lang: ctx.lang,
     user_agent: ctx.user_agent, reporter: "kaa", created: now, updated: now };
@@ -497,6 +501,7 @@ function openCount() { labelBtn(); return allItems().filter(i => !CLOSED.has(i.s
 function filtered() {
   const s = v.q.trim().toLowerCase();
   const list = allItems().filter(i => (!v.project || i.project === v.project) && (!v.type || i.type === v.type) && (!v.priority || i.priority === v.priority)
+    && (!v.component || i.component === v.component || (i.component === "both" && v.component !== "both"))
     && (v.status === "all" || (v.status === "open" ? !CLOSED.has(i.status) : i.status === v.status))
     && (!s || [i.id, i.title, i.description, i.location].join(" ").toLowerCase().includes(s)));
   const key = v.sort, dir = v.dir === "asc" ? 1 : -1;
@@ -519,13 +524,14 @@ function renderView() {
     return `<tr class="fb-row" data-fb-row="${esc(it.id)}" aria-expanded="${open}"${fbA("item-" + it.id, it.id)}>
       <td class="mono fb-c-id">${esc(it.id)}</td>
       <td class="fb-c-type">${pill("", typeDot(it.type) + T("fb.t." + it.type))}</td>
+      <td class="fb-c-comp" title="${esc(it.component ? T("fb.cp." + it.component) : "")}">${compIcon(it.component) || '<span class="muted">—</span>'}</td>
       <td class="fb-c-status">${pill("st-" + esc(it.status), esc(T("fb.st." + it.status)))}</td>
       <td class="fb-c-pri">${pill("pri-" + esc(it.priority), esc(T("pri." + it.priority)))}</td>
       <td class="mono fb-c-proj">${esc(it.project)}</td>
       <td class="fb-title fb-c-title">${esc(it.title)}</td>
       <td class="fb-loc fb-c-loc">${esc(it.location)}</td>
       <td class="muted fb-c-created" style="white-space:nowrap">${esc(fmtWhen(it.created))}</td></tr>
-      ${open ? `<tr class="fb-detail-row"><td colspan="8">${renderDetail(it)}</td></tr>` : ""}`;
+      ${open ? `<tr class="fb-detail-row"><td colspan="9">${renderDetail(it)}</td></tr>` : ""}`;
   }).join("");
   return `<div class="fb-view">
     ${loadErr ? `<div class="error">${esc(loadErr)}</div>` : ""}
@@ -534,6 +540,7 @@ function renderView() {
       <input type="search" id="fbv-q" placeholder="${T("fb.v.search")}" aria-label="${T("fb.v.search")}" value="${esc(v.q)}">
       <select id="fbv-project" aria-label="${T("fb.v.project")}">${opt("", T("fb.v.allProjects"), v.project)}${projects.map(p => opt(p, p, v.project)).join("")}</select>
       <select id="fbv-type" aria-label="${T("fb.v.type")}">${opt("", T("fb.v.anyType"), v.type)}${ENUMS.type.map(t => opt(t, T("fb.t." + t), v.type)).join("")}</select>
+      <select id="fbv-component" aria-label="${T("fb.comp")}">${opt("", T("fb.v.anyComp"), v.component)}${COMPS.map(c => opt(c, T("fb.cp." + c), v.component)).join("")}</select>
       <select id="fbv-status" aria-label="${T("fb.v.status")}">${opt("open", T("fb.v.open"), v.status)}${opt("all", T("fb.v.all"), v.status)}${STATUSES.map(s => opt(s, T("fb.st." + s), v.status)).join("")}</select>
       <select id="fbv-priority" aria-label="${T("fb.v.priority")}">${opt("", T("fb.v.anyPriority"), v.priority)}${ENUMS.priority.map(p => opt(p, T("pri." + p), v.priority)).join("")}</select>
       <span class="fb-spacer"></span>
@@ -542,14 +549,15 @@ function renderView() {
     </div>
     ${!allItems().length ? `<div class="note">${T("fb.v.none")}</div>`
       : !list.length ? `<div class="note">${T("fb.v.empty")}</div>`
-      : `<div class="table-wrap"${fbA("fb-table")}><table class="fb-table"><thead><tr>${th("id", T("fb.v.id"))}${th("type", T("fb.v.type"))}${th("status", T("fb.v.status"))}${th("priority", T("fb.v.priority"))}${th("project", T("fb.v.project"))}${th("title", T("fb.v.title"))}${th("location", T("fb.v.location"))}${th("created", T("fb.v.created"))}</tr></thead><tbody>${rows}</tbody></table></div>`}
+      : `<div class="table-wrap"${fbA("fb-table")}><table class="fb-table"><thead><tr>${th("id", T("fb.v.id"))}${th("type", T("fb.v.type"))}${th("component", T("fb.comp"))}${th("status", T("fb.v.status"))}${th("priority", T("fb.v.priority"))}${th("project", T("fb.v.project"))}${th("title", T("fb.v.title"))}${th("location", T("fb.v.location"))}${th("created", T("fb.v.created"))}</tr></thead><tbody>${rows}</tbody></table></div>`}
   </div>`;
 }
 function renderDetail(it) {
-  const shown = ["location", "anchor", "selector", "page", "branch", "build", "viewport", "theme", "lang", "user_agent", "reporter", "created", "updated", "closed", "resolution", "work_branch", "pr", "task"];
-  const link = (f, val) => f === "pr" && /^https?:\/\//.test(val) ? `<a href="${esc(val)}" target="_blank" rel="noopener">${esc(val)}</a>` : esc(val);
+  const shown = ["component", "location", "anchor", "selector", "page", "branch", "build", "viewport", "theme", "lang", "user_agent", "reporter", "created", "updated", "closed", "resolution", "work_branch", "pr", "task"];
+  const link = (f, val) => f === "pr" && /^https?:\/\//.test(val) ? `<a href="${esc(val)}" target="_blank" rel="noopener">${esc(val)}</a>` : f === "component" ? esc(T("fb.cp." + val)) : esc(val);
   const editable = isOwn(it);
   const input = (f) => `<label class="field"><span>${T("fb.f." + f)}</span><input type="text" name="${f}" value="${esc(it[f] || "")}"></label>`;
+  const opt2 = (val, label, cur) => `<option value="${esc(val)}" ${val === cur ? "selected" : ""}>${esc(label)}</option>`;
   return `<div class="fb-detail">
     <p class="desc">${esc(it.description)}</p>
     ${it.screenshot ? `<figure class="fb-shot"><a href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}/blob/${esc(cfg.branch)}/${esc(it.screenshot)}" target="_blank" rel="noopener"><img data-fb-shot="${esc(it.screenshot)}" alt="${esc(T("fb.f.screenshot"))}"></a></figure>` : ""}
@@ -560,6 +568,7 @@ function renderDetail(it) {
     ${editable ? `<form class="editor" data-fb-edit="${esc(it.id)}" style="grid-column:auto;margin:0">
       <div class="grid2">
         <label class="field"><span>${T("fb.v.status")}</span><select name="status">${STATUSES.map(s => `<option value="${s}" ${s === it.status ? "selected" : ""}>${esc(T("fb.st." + s))}</option>`).join("")}</select></label>
+        <label class="field"><span>${T("fb.comp")}</span><select name="component">${opt2("", T("fb.cp.none"), it.component || "")}${COMPS.map(c => opt2(c, T("fb.cp." + c), it.component || "")).join("")}</select></label>
         <label class="field"><span>${T("fb.v.priority")}</span><select name="priority">${ENUMS.priority.map(p => `<option value="${p}" ${p === it.priority ? "selected" : ""}>${esc(T("pri." + p))}</option>`).join("")}</select></label>
         ${input("work_branch")}${input("pr")}${input("task")}
       </div>
@@ -574,7 +583,7 @@ function bindView(rootEl) {
   const keep = () => store.set("fbView", v);
   const q = rootEl.querySelector("#fbv-q");
   if (q) q.oninput = e => { v.q = e.target.value; keep(); const pos = e.target.selectionStart; render(); const n = $("fbv-q"); n.focus(); n.setSelectionRange(pos, pos); };
-  ["project", "type", "status", "priority"].forEach(k => { const el = rootEl.querySelector("#fbv-" + k); if (el) el.onchange = e => { v[k] = e.target.value; keep(); render(); }; });
+  ["project", "type", "component", "status", "priority"].forEach(k => { const el = rootEl.querySelector("#fbv-" + k); if (el) el.onchange = e => { v[k] = e.target.value; keep(); render(); }; });
   rootEl.querySelectorAll("[data-sort]").forEach(b => b.onclick = () => {
     const k = b.dataset.sort; if (v.sort === k) v.dir = v.dir === "asc" ? "desc" : "asc"; else { v.sort = k; v.dir = k === "created" ? "desc" : "asc"; }
     keep(); render();
@@ -596,7 +605,7 @@ function bindView(rootEl) {
       e.preventDefault();
       const it = own.find(x => x.id === f.dataset.fbEdit); if (!it) return;
       const fd = new FormData(f), fields = {};
-      ["status", "priority", "work_branch", "pr", "task", "resolution"].forEach(k => { const val = asText(fd.get(k)).trim(); if (val !== asText(it[k])) fields[k] = val; });
+      ["status", "priority", "component", "work_branch", "pr", "task", "resolution"].forEach(k => { const val = asText(fd.get(k)).trim(); if (val !== asText(it[k])) fields[k] = val; });
       if (!Object.keys(fields).length) { openId = null; render(); return; }
       if (fields.status) fields.closed = CLOSED.has(fields.status) ? (CLOSED.has(it.status) && it.closed ? it.closed : nowMsk().slice(0, 10)) : "";
       fields.updated = nowMsk();
@@ -642,10 +651,10 @@ function download(items, project) {
 
 /* used by the intake agent (agent.js): open items as context, and adding an item Kaa accepted from a proposal */
 function openItems() { return (own || []).filter(i => !CLOSED.has(i.status)).map(i => ({ id: i.id, type: i.type, status: i.status, title: i.title })); }
-function addItem({ type, title, description, priority }) {
+function addItem({ type, title, description, priority, component }) {
   if (!own) throw new Error("feedback log not loaded");
   const now = nowMsk(), ctx = context();
-  const item = { id: nextId(own, type), project: PROJECT, type, status: "new", priority: priority || "normal",
+  const item = { id: nextId(own, type), project: PROJECT, type, component: component || RoadmapCore.componentOf(`${title} ${description}`, "site"), status: "new", priority: priority || "normal",
     title: asText(title).trim().slice(0, 100), description: asText(description).trim() || asText(title).trim(),
     location: T("fb.wholePage"), anchor: "page", selector: "", page: ctx.page, branch: ctx.branch, build: ctx.build,
     viewport: ctx.viewport, theme: ctx.theme, lang: ctx.lang, user_agent: ctx.user_agent, reporter: "kaa", created: now, updated: now };

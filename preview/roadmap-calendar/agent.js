@@ -235,7 +235,7 @@ function applyProposals(entry) {
     } else if (op.op === "add_idea" && window.IDEAS) {
       results[i] = IDEAS.addIdea({ title: op.title, description: op.description || "", projects: tagsOf(op) }).id;
     } else if (op.op === "add_feedback" && window.FB && FB.addItem) {
-      results[i] = FB.addItem({ type: op.feedback_type, title: op.title, description: op.description || op.reason, priority: op.priority }).id;
+      results[i] = FB.addItem({ type: op.feedback_type, title: op.title, description: op.description || op.reason, priority: op.priority, component: op.component }).id;
     }
   });
   const calPicked = picked.filter(x => C.AGENT_EVENT_OPS.includes(x.op.op));

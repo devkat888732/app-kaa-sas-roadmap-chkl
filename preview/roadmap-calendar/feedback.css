@@ -106,7 +106,7 @@
 .fb-table tbody tr.fb-row:hover { background: var(--sunken); }
 .fb-table tbody tr.fb-row[aria-expanded="true"] { background: var(--sunken); }
 .fb-table td.fb-title { min-width: 200px; }
-.fb-table td.fb-c-id, .fb-table td.fb-c-proj { white-space: nowrap; }
+.fb-table td.fb-c-id, .fb-table td.fb-c-proj, .fb-table td.fb-c-comp { white-space: nowrap; }
 .fb-csv { display: flex; gap: 8px; flex-wrap: wrap; }
 .fb-pill { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: 99px; font-size: 12px; white-space: nowrap; background: var(--sunken); color: var(--muted); }
 .fb-pill.st-new { color: var(--accent); }
@@ -125,11 +125,12 @@
   /* the table becomes a list of cards */
   .fb-table thead { display: none; }
   .fb-table, .fb-table tbody, .fb-table tr, .fb-table td { display: block; width: 100%; }
-  .fb-table tr.fb-row { display: grid; grid-template-columns: auto auto 1fr; gap: 4px 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .fb-table tr.fb-row { display: grid; grid-template-columns: auto auto auto 1fr; gap: 4px 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
   .fb-table tr.fb-row td { padding: 0; border: 0; }
   .fb-table td.fb-c-id { grid-column: 1; }
   .fb-table td.fb-c-type { grid-column: 2; }
-  .fb-table td.fb-c-status { grid-column: 3; justify-self: end; }
+  .fb-table td.fb-c-comp { grid-column: 3; }
+  .fb-table td.fb-c-status { grid-column: 4; justify-self: end; }
   .fb-table td.fb-c-title, .fb-table td.fb-c-loc { grid-column: 1 / -1; }
   .fb-table td.fb-c-pri, .fb-table td.fb-c-proj, .fb-table td.fb-c-created { display: none; }
   .fb-table tr.fb-detail-row td { padding: 10px 12px; }

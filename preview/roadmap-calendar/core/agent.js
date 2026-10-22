@@ -16,7 +16,7 @@ C.AGENT_JOURNAL_HEAD = "# AI-generated (Claude) · 2026-10-15 · not reviewed by
 C.AGENT_OPS = ["add_task", "update_task", "add_milestone", "update_milestone", "set_goal", "add_feedback", "add_idea", "add_event", "update_event", "skip_event", "remove_event"];
 C.AGENT_EVENT_OPS = ["add_event", "update_event", "skip_event", "remove_event"];
 C.AGENT_FIELDS = ["ref", "task_id", "milestone_id", "title", "area", "status", "owner", "priority", "due", "notes", "description", "feedback_type", "projects",
-  "event_id", "time", "minutes", "repeat", "dates", "starts", "ends"];
+  "event_id", "time", "minutes", "repeat", "dates", "starts", "ends", "component"];
 C.agentSchema = () => {
   const nullable = { type: ["string", "null"] };
   return {
@@ -103,6 +103,7 @@ C.agentProblems = (op, ops, data, projects, events = []) => {
     if (!op.title) e("ag.inv.title");
   } else if (op.op === "add_feedback") {
     if (!["bug", "update"].includes(op.feedback_type)) e("ag.inv.type");
+    if (op.component && !C.FEEDBACK_COMPONENTS.includes(op.component)) e("ag.inv.field", "component", op.component);
     if (!op.title) e("ag.inv.title");
   } else if (op.op === "add_idea") {
     const codes = new Set((projects || []).map(p => p.code)), tags = C.agentTags(op);

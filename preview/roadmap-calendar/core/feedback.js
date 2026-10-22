@@ -8,14 +8,23 @@
 const C = root.RoadmapCore;
 if (!C || !C.clean) throw new Error("load roadmap/core/common.js before feedback.js");
 
-C.FEEDBACK_FIELDS = ["id", "project", "type", "status", "priority", "title", "description", "location", "anchor", "selector",
+C.FEEDBACK_FIELDS = ["id", "project", "type", "component", "status", "priority", "title", "description", "location", "anchor", "selector",
   "page", "branch", "build", "viewport", "theme", "lang", "user_agent", "reporter", "created", "updated",
   "closed", "resolution", "work_branch", "pr", "task", "screenshot"];   // screenshot: path of an image in this repository (the Штаб bot saves it)
 C.FEEDBACK_REQUIRED = ["id", "project", "type", "status", "priority", "title", "description", "location", "anchor", "page",
   "branch", "build", "viewport", "theme", "lang", "user_agent", "reporter", "created", "updated"];
 C.FEEDBACK_STATUSES = ["new", "accepted", "in-progress", "in-review", "done", "rejected", "duplicate"];
 C.FEEDBACK_CLOSED = ["done", "rejected", "duplicate"];
-C.FEEDBACK_ENUMS = { type: ["bug", "update"], status: C.FEEDBACK_STATUSES, priority: ["high", "normal", "low"], lang: ["en", "ru"] };
+// component: what the item is about — the roadmap site, the Штаб bot, or both (optional; older items have none)
+C.FEEDBACK_COMPONENTS = ["site", "bot", "both"];
+C.FEEDBACK_ENUMS = { type: ["bug", "update"], component: C.FEEDBACK_COMPONENTS, status: C.FEEDBACK_STATUSES, priority: ["high", "normal", "low"], lang: ["en", "ru"] };
+// a guess from the text: names the site / the bot / both; otherwise where it was written (fallback)
+C.componentOf = (text, fallback = "") => {
+  const t = String(text || "").toLowerCase();
+  const site = /сайт|страниц|вкладк|в браузере|site|page|tab\b|баннер|плашк[аеи] на сайте|чек-?лист/.test(t);
+  const bot = /бот|телеграм|telegram|в чате|заставк|кнопк[аиу] (в|под) сообщ|мини-?приложени/.test(t);
+  return site && bot ? "both" : site ? "site" : bot ? "bot" : fallback;
+};
 C.FEEDBACK_ID_RE = /^([A-Z]{2,5})-([BU])-(\d{3,})$/;
 
 C.feedbackPath = project => `roadmap/feedback/items-${project}__ai.yaml`;
