@@ -366,7 +366,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "1f0fa8b", "preview": "roadmap-calendar"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "b3ceeeb", "preview": "roadmap-calendar"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -437,7 +437,7 @@ const I18N = {
     "noMacros": "No macros documented yet. Each folder in <code>macros/&lt;name&gt;/</code> appears here with its pipeline: schema → card → diagram → reviewed by a human. Stages are read from the files in the repo.",
     "macro": "Macro", "schema": "Schema", "card": "Card", "diagram": "Diagram", "reviewed": "Reviewed", "stageDone": "done", "stageMissing": "missing",
     "allReviewed": "Every AI-generated file has been reviewed.",
-    "tab.calendar": "Calendar", "calMissing": "The calendar module (calendar.js) didn't load. Reload the page.",
+    "dataBranch": b => `data: ${b}`, "tab.calendar": "Calendar", "calMissing": "The calendar module (calendar.js) didn't load. Reload the page.",
     "focus.title": "Review first", "focus.count": (f, b) => `${f} files, ${b} branches`, "focus.files": "Files", "focus.branches": "Branches (PRs)", "focus.hide": "Hide until the list changes (🔥 at the top brings it back)", "focus.show": "show",
     "reviewNote": mark => `AI-generated files still marked <code>${mark}</code>. After reviewing a file, change its mark to “reviewed by a human, YYYY-MM-DD”; it leaves this list on the next refresh.`,
     "file": "File", "folder": "Folder", "root": "root", "noCommits": "No commits found.",
@@ -500,7 +500,7 @@ const I18N = {
     "noMacros": "Пока нет описанных макросов. Каждая папка <code>macros/&lt;имя&gt;/</code> появится здесь со своим конвейером: схема → карточка → диаграмма → проверено человеком. Этапы определяются по файлам в репозитории.",
     "macro": "Макрос", "schema": "Схема", "card": "Карточка", "diagram": "Диаграмма", "reviewed": "Проверено", "stageDone": "есть", "stageMissing": "нет",
     "allReviewed": "Все файлы, созданные ИИ, проверены.",
-    "tab.calendar": "Календарь", "calMissing": "Модуль календаря (calendar.js) не загрузился. Перезагрузите страницу.",
+    "dataBranch": b => `данные: ${b}`, "tab.calendar": "Календарь", "calMissing": "Модуль календаря (calendar.js) не загрузился. Перезагрузите страницу.",
     "focus.title": "На ревью в первую очередь", "focus.count": (f, b) => `${f} ${plural(f, "файл", "файла", "файлов")}, ${b} ${plural(b, "ветка", "ветки", "веток")}`, "focus.files": "Файлы", "focus.branches": "Ветки (PR)", "focus.hide": "Скрыть, пока список не поменяется (вернуть — 🔥 вверху)", "focus.show": "показать",
     "reviewNote": mark => `Файлы, созданные ИИ, у которых ещё стоит пометка <code>${mark}</code>. После проверки замените пометку на «reviewed by a human, ГГГГ-ММ-ДД» — при следующем обновлении файл уйдёт из списка.`,
     "file": "Файл", "folder": "Папка", "root": "корень", "noCommits": "Коммитов не найдено.",
@@ -526,7 +526,11 @@ const LANGS = ["en", "ru"];
 // Russian plural: 1 день, 2 дня, 5 дней
 function plural(n, one, few, many) { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many; }
 let lang = store.get("lang", null);
-if (!LANGS.includes(lang)) lang = /^ru\b/i.test(navigator.language || "") ? "ru" : "en";
+// no language chosen here: Telegram's (inside the bot's Mini App), else the browser's
+if (!LANGS.includes(lang)) {
+  const tgLang = (() => { try { return Telegram.WebApp.initDataUnsafe.user.language_code || ""; } catch { return ""; } })();
+  lang = /^ru/i.test(tgLang || navigator.language || "") ? "ru" : "en";
+}
 function T(key, ...args) { const v = I18N[lang][key] ?? I18N.en[key] ?? key; return typeof v === "function" ? v(...args) : v; }
 const areaLabel = a => T("area." + a) === "area." + a ? a : T("area." + a);
 const priLabel = p => T("pri." + p) === "pri." + p ? p : T("pri." + p);
@@ -542,6 +546,8 @@ function applyLangStatic() {
 // a preview keeps its own repo/branch settings (same origin as the live page); the token and look are shared
 const CFG_KEY = DEFAULTS.preview ? "cfg:preview" : "cfg";
 const cfg = Object.assign({}, DEFAULTS, store.get(CFG_KEY, {}), { token: store.get("token", null) || sessionToken() });
+// ?data=<branch>: the data branch of the bot that opened the page (the test bot: hq-sandbox) — for this visit only
+{ const d = new URLSearchParams(location.search).get("data"); if (d && /^[\w.\/-]{1,80}$/.test(d)) { cfg.branch = d; cfg.dataFromLink = true; } }
 function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); } catch { return null; } }
 const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false, rm: false }, store.get("ui", {}));
 if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
@@ -835,7 +841,7 @@ function renderMeta() {
     b.hidden = false; b.innerHTML = T("previewBanner", esc(DEFAULTS.preview), esc(cfg.branch));
     document.title = "[preview] SAS kaa Roadmap";
   }
-  $("repo-label").textContent = `${cfg.owner}/${cfg.repo}`;
+  $("repo-label").textContent = `${cfg.owner}/${cfg.repo}${cfg.dataFromLink ? " · " + T("dataBranch", cfg.branch) : ""}`;
   $("meta").innerHTML = cfg.token ? `
     <a href="https://github.com/${esc(cfg.owner)}/${esc(cfg.repo)}" target="_blank" rel="noopener">${T("repository")}</a>
     <span class="mono">${esc(cfg.branch)}</span>
