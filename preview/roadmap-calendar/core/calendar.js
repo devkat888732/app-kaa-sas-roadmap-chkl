@@ -28,6 +28,7 @@ C.addDays = (s, n) => { const d = toUtc(s); d.setUTCDate(d.getUTCDate() + n); re
 C.weekdayOf = s => C.WEEKDAYS[(toUtc(s).getUTCDay() + 6) % 7];        // "mon" … "sun"
 const dayNo = s => Math.round(toUtc(s).getTime() / 864e5);
 const mondayOf = s => C.addDays(s, -C.WEEKDAYS.indexOf(C.weekdayOf(s)));
+C.mondayOf = mondayOf;
 // today in Moscow, whatever the caller's clock zone (the bot runs in UTC)
 C.todayMsk = (d = new Date()) => C.nowMsk(d).slice(0, 10);
 
@@ -132,7 +133,8 @@ C.nextOccurrence = (e, from) => {
 
 /* The week ahead: 7 days from today, each with its events and the deadlines of open tasks and milestones.
  * tasks / milestones = the tasks file's lists; statusOf(task) = the caller's effective status. */
-C.weekAgenda = ({ events = [], tasks = [], milestones = [], statusOf = t => t.status }, today, n = 7) => {
+/* from = the first day (today for «the next 7 days», C.mondayOf(today) for «this week»); mark = today */
+C.weekAgenda = ({ events = [], tasks = [], milestones = [], statusOf = t => t.status }, today, n = 7, mark = today) => {
   const end = C.addDays(today, n - 1), occ = C.occurrences(events, today, end);
   const msDone = id => { const ts = tasks.filter(t => t.milestone === id); return ts.length > 0 && ts.every(t => statusOf(t) === "done"); };
   return Array.from({ length: n }, (_, i) => {
@@ -142,7 +144,7 @@ C.weekAgenda = ({ events = [], tasks = [], milestones = [], statusOf = t => t.st
       ...milestones.filter(m => m.due === date && !msDone(m.id)).map(m => ({ kind: "milestone", id: m.id, title: m.title, time: "" })),
       ...tasks.filter(t => t.due === date && statusOf(t) !== "done").map(t => ({ kind: "task", id: t.id, title: t.title, time: "" }))
     ];
-    return { date, weekday: C.weekdayOf(date), today: i === 0, items };
+    return { date, weekday: C.weekdayOf(date), today: date === mark, past: date < mark, items };
   });
 };
 
