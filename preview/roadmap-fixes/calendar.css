@@ -1,0 +1,80 @@
+/* AI-generated (Claude) · 2026-10-21 · not reviewed by a human
+   Calendar (calendar.js): «The week» chain under the status counters and the Calendar tab. Builds on the host page's tokens and feedback.css. */
+
+/* ---------- the week: 7 days as a chain ---------- */
+.week { margin-top: 12px; display: grid; gap: 10px; }
+.wk-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; font-size: 13px; }
+.wk-chain { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; position: relative; }
+/* the line that links the days */
+.wk-chain::before { content: ""; position: absolute; left: 7%; right: 7%; top: 15px; height: 2px; background: var(--line); }
+.wk-day { position: relative; display: grid; align-content: start; gap: 6px; padding: 0 4px; min-width: 0; }
+.wk-date { position: relative; justify-self: center; display: inline-flex; gap: 4px; align-items: baseline; border: 1px solid var(--line); background: var(--surface);
+  border-radius: 99px; padding: 4px 10px; font: inherit; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.wk-date b { color: var(--fg); font-weight: 600; text-transform: capitalize; }
+.wk-date:hover { border-color: var(--accent); }
+.wk-day.is-today .wk-date { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.wk-day.is-today .wk-date b { color: inherit; }
+.wk-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.wk-item { display: flex; gap: 5px; align-items: baseline; font-size: 12.5px; line-height: 1.3; min-width: 0; }
+.wk-item .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; transform: translateY(-1px); }
+.wk-time { flex: none; font-size: 11.5px; color: var(--muted); }
+.wk-title { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.wk-task .wk-title, .wk-milestone .wk-title { color: var(--muted); }
+.wk-more { font-size: 12px; padding-left: 12px; }
+.wk-none { justify-self: center; color: var(--line); }
+@media (max-width: 760px) {
+  /* a phone: the chain scrolls sideways, about three days in view */
+  .wk-chain { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; margin: 0 -4px; }
+  .wk-chain::before { left: 0; right: 0; width: calc(7 * 132px); }
+  .wk-day { flex: 0 0 132px; scroll-snap-align: start; }
+}
+
+/* ---------- the Calendar tab ---------- */
+.cal-bar { align-items: center; }
+.cal-month { font-family: var(--font-display); font-size: 17px; min-width: 9em; text-align: center; }
+.cal-seg { display: inline-flex; }
+.cal-seg .btn:first-child { border-radius: 10px 0 0 10px; }
+.cal-seg .btn:last-child { border-radius: 0 10px 10px 0; margin-left: -1px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-wd { font-size: 12px; color: var(--muted); text-align: center; text-transform: capitalize; padding: 2px 0; }
+.cal-cell { display: grid; align-content: start; gap: 3px; min-height: 92px; padding: 6px; text-align: left; font: inherit; color: var(--fg); cursor: pointer;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--glass-strong); min-width: 0; }
+.cal-cell:hover { border-color: var(--accent); }
+.cal-cell.is-out { background: transparent; color: var(--muted); border-style: dashed; min-height: 0; }
+.cal-cell.is-today .cal-num { background: var(--accent); color: var(--surface); }
+.cal-cell.is-sel { outline: 2px solid var(--accent); outline-offset: -1px; }
+.cal-num { justify-self: start; font-size: 12px; font-weight: 600; border-radius: 99px; padding: 1px 6px; }
+.cal-chip { display: block; font-size: 12px; line-height: 1.3; padding: 1px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-chip .mono { font-size: 11px; color: var(--muted); }
+.cal-more { font-size: 12px; }
+.cal-dayview { display: grid; gap: 10px; }
+.cal-dayview h3 { margin: 0; font-size: 15px; }
+.cal-dayview h3::first-letter, .cal-list-day::first-letter { text-transform: uppercase; }
+.cal-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cal-item { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); }
+.cal-item:first-child { border-top: 0; }
+.cal-when { font-size: 13px; padding-top: 1px; }
+.cal-what { display: grid; gap: 2px; min-width: 0; }
+.cal-what .muted { font-size: 13px; }
+.cal-acts { display: flex; flex-wrap: wrap; gap: 2px; justify-content: flex-end; }
+.cal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.cal-list > li { display: grid; gap: 6px; padding: 12px; border-radius: var(--radius); border: 1px solid var(--glass-edge); background: var(--glass); }
+.cal-list > li.is-today { border-color: var(--accent); }
+.cal-list-day { justify-self: start; border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--fg); cursor: pointer; text-align: left; }
+.cal-list > li.is-sel { outline: 2px solid var(--accent); outline-offset: -1px; }
+.cal-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 14px; }
+.cal-lines .mono { font-size: 12.5px; color: var(--muted); display: inline-block; min-width: 5.5em; }
+.cal-form [hidden] { display: none; }
+fieldset.cal-days { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.cal-days legend { padding: 0; margin-bottom: 4px; }
+.cal-days label { display: inline-flex; gap: 4px; align-items: center; color: var(--fg); text-transform: capitalize; }
+.cal-phone { font-size: 13px; margin: 0; }
+@media (max-width: 640px) {
+  .cal-cell { min-height: 52px; padding: 4px; }
+  .cal-chip { font-size: 0; height: 6px; padding: 0; border-radius: 3px; background: var(--accent); }   /* a phone: only marks in the grid, the day below has the details */
+  .cal-item { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .cal-acts { justify-content: flex-start; }
+  .cal-month { min-width: 0; font-size: 15px; }
+  .cal-bar .fb-spacer { display: none; }
+}
