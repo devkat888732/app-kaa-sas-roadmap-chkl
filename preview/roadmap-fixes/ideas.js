@@ -11,7 +11,7 @@
  * Relies on the host page's globals (DEFAULTS, cfg, ui, doc, lang, I18N, T, $, esc, store, gh, repoPath, b64decode, b64encode,
  * splitHeader, YAML_OPTS, jsyaml, AREAS, render, edit, nextId, today, fmtDate, fbA, clean) and window.FB (styles, addItem);
  * format, validation, ids and edit operations: window.RoadmapCore (roadmap/core/ideas.js, shared with the Штаб bot).
- * Exposes window.IDEAS = { load, openCount, renderView, bindView, busy, openForm, projects, openIdeas, addIdea }.
+ * Exposes window.IDEAS = { load, openCount, renderView, bindView, busy, openForm, projects, openIdeas, addIdea, addProject }.
  */
 (() => {
 "use strict";
@@ -327,5 +327,10 @@ function bindView(rootEl) {
   });
 }
 
-window.IDEAS = { load, openCount, renderView, bindView, busy: () => pending.length > 0 || saving, openForm: () => openForm(null), projects, openIdeas, addIdea };
+// a new project tag (the agent's add_project): saved with the next save, before the ideas that use it
+function addProject({ code, name }) {
+  if (!projects().some(p => p.code === code)) edit_({ type: "project", project: { code, name: name || code } }, true);
+  return code;
+}
+window.IDEAS = { load, openCount, renderView, bindView, busy: () => pending.length > 0 || saving, openForm: () => openForm(null), projects, openIdeas, addIdea, addProject };
 })();

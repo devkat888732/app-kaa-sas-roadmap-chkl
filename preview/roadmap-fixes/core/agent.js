@@ -13,7 +13,7 @@ if (!C || !C.applyTaskOp) throw new Error("load roadmap/core/common.js and tasks
 C.AGENT_PROMPT_PATH = "roadmap/agent/system-prompt__ai.md";
 C.AGENT_JOURNAL_PATH = "roadmap/agent/inbox__ai.yaml";
 C.AGENT_JOURNAL_HEAD = "# AI-generated (Claude) · 2026-10-15 · not reviewed by a human\n#\n# Journal of the roadmap intake agent: what Kaa wrote, what the agent proposed, what she applied.\n# Written by the roadmap page when proposals are applied. Used to build evals (roadmap/agent/evals__ai.yaml).";
-C.AGENT_OPS = ["add_task", "update_task", "add_milestone", "update_milestone", "set_goal", "add_feedback", "add_idea", "add_event", "update_event", "skip_event", "remove_event",
+C.AGENT_OPS = ["add_task", "update_task", "add_milestone", "update_milestone", "set_goal", "add_feedback", "add_idea", "add_project", "add_event", "update_event", "skip_event", "remove_event",
   "make_wallpaper", "show_view"];
 C.AGENT_EVENT_OPS = ["add_event", "update_event", "skip_event", "remove_event"];
 /* requests, not changes: the Штаб bot does them at once (a wallpaper from her data; a screen of the bot); the page can't */
@@ -112,8 +112,16 @@ C.agentProblems = (op, ops, data, projects, events = []) => {
     if (!["bug", "update"].includes(op.feedback_type)) e("ag.inv.type");
     if (op.component && !C.FEEDBACK_COMPONENTS.includes(op.component)) e("ag.inv.field", "component", op.component);
     if (!op.title) e("ag.inv.title");
+  } else if (op.op === "add_project") {
+    // a new project tag for ideas: projects = its code (2–5 capital Latin letters), title = its name
+    const code = String(op.projects || "").trim().toUpperCase();
+    if (!C.PROJECT_CODE_RE.test(code)) e("ag.inv.code", op.projects || "—");
+    else if ((projects || []).some(p => p.code === code)) e("ag.inv.codeTaken", code);
+    if (!op.title) e("ag.inv.title");
   } else if (op.op === "add_idea") {
-    const codes = new Set((projects || []).map(p => p.code)), tags = C.agentTags(op);
+    // known projects and the ones proposed in the same answer
+    const codes = new Set([...(projects || []).map(p => p.code), ...ops.filter(o => o.op === "add_project" && o.projects).map(o => String(o.projects).trim().toUpperCase())]);
+    const tags = C.agentTags(op);
     if (!op.title) e("ag.inv.title");
     if (!tags.length) e("ag.inv.noTags");
     tags.filter(c => !codes.has(c)).forEach(c => e("ag.inv.tag", c));

@@ -44,7 +44,7 @@ Object.assign(I18N.en, {
   "ag.op.add_idea": "Idea", "ag.inv.noTags": "no project tag", "ag.inv.tag": c => `unknown project ${c}`, "ag.op.add_feedback.bug": "Bug", "ag.op.add_feedback.update": "Update", "ag.newMs": t => `new milestone “${t}”`,
   "ag.inv.task": id => `task ${id} doesn't exist`, "ag.inv.ms": id => `milestone ${id} doesn't exist`, "ag.inv.field": (f, v) => `${f}: "${v}" isn't allowed`,
   "ag.inv.title": "no title", "ag.inv.nothing": "nothing to change", "ag.inv.date": d => `bad date ${d}`, "ag.inv.type": "bug or update?",
-  "ag.op.add_event": "Event", "ag.op.update_event": "Change event", "ag.op.skip_event": "Skip", "ag.op.remove_event": "Delete event", "ag.op.make_wallpaper": "Wallpaper", "ag.op.show_view": "Show", "ag.botOnly": "only the Штаб bot does this",
+  "ag.op.add_event": "Event", "ag.op.update_event": "Change event", "ag.op.skip_event": "Skip", "ag.op.remove_event": "Delete event", "ag.op.make_wallpaper": "Wallpaper", "ag.op.add_project": "New project", "ag.inv.code": c => `project code must be 2–5 capital letters: ${c}`, "ag.inv.codeTaken": c => `project ${c} exists already`, "ag.op.show_view": "Show", "ag.botOnly": "only the Штаб bot does this",
   "ag.inv.time": t => `bad time ${t}`, "ag.inv.minutes": m => `bad length ${m}`, "ag.inv.repeat": r => `unclear repeat ${r}`, "ag.inv.ends": "ends before it starts",
   "ag.inv.when": "no dates or repeat", "ag.inv.event": id => `no event ${id}`, "ag.noCal": "the calendar didn't load",
   "ag.journalErr": "Applied, but the journal entry wasn't saved.", "ag.clear": "New conversation", "ag.keyset": "key saved"
@@ -65,7 +65,7 @@ Object.assign(I18N.ru, {
   "ag.op.add_idea": "Идея", "ag.inv.noTags": "нет тега проекта", "ag.inv.tag": c => `неизвестный проект ${c}`, "ag.op.add_feedback.bug": "Баг", "ag.op.add_feedback.update": "Апдейт", "ag.newMs": t => `новая веха «${t}»`,
   "ag.inv.task": id => `задачи ${id} нет`, "ag.inv.ms": id => `вехи ${id} нет`, "ag.inv.field": (f, v) => `${f}: значение «${v}» недопустимо`,
   "ag.inv.title": "нет названия", "ag.inv.nothing": "нечего менять", "ag.inv.date": d => `неверная дата ${d}`, "ag.inv.type": "баг или апдейт?",
-  "ag.op.add_event": "Событие", "ag.op.update_event": "Изменение события", "ag.op.skip_event": "Пропуск", "ag.op.remove_event": "Удалить событие", "ag.op.make_wallpaper": "Заставка", "ag.op.show_view": "Показать", "ag.botOnly": "это делает только бот «Штаб»",
+  "ag.op.add_event": "Событие", "ag.op.update_event": "Изменение события", "ag.op.skip_event": "Пропуск", "ag.op.remove_event": "Удалить событие", "ag.op.make_wallpaper": "Заставка", "ag.op.add_project": "Новый проект", "ag.inv.code": c => `код проекта — 2–5 заглавных латинских букв: ${c}`, "ag.inv.codeTaken": c => `проект ${c} уже есть`, "ag.op.show_view": "Показать", "ag.botOnly": "это делает только бот «Штаб»",
   "ag.inv.time": t => `неверное время ${t}`, "ag.inv.minutes": m => `неверная длительность ${m}`, "ag.inv.repeat": r => `непонятный повтор ${r}`, "ag.inv.ends": "конец раньше начала",
   "ag.inv.when": "нет дат или повтора", "ag.inv.event": id => `нет события ${id}`, "ag.noCal": "календарь не загрузился",
   "ag.journalErr": "Применено, но запись в журнал не сохранилась.", "ag.clear": "Новый разговор", "ag.keyset": "ключ сохранён"
@@ -210,6 +210,10 @@ function applyProposals(entry) {
     edit({ type: "add-ms", ms: clean({ id, title: op.title, due: op.due || "", description: op.description || "" }) });
     results[i] = id;
   });
+  // new project tags before the ideas that use them (saved with them, in the ideas file)
+  picked.filter(x => x.op.op === "add_project" && window.IDEAS && IDEAS.addProject).forEach(({ op, i }) => {
+    results[i] = IDEAS.addProject({ code: String(op.projects).trim().toUpperCase(), name: op.title });
+  });
   picked.forEach(({ op, i }) => {
     if (op.op === "add_task") {
       const id = nextId();
@@ -293,6 +297,7 @@ function opDetails(op, ops, entry) {
   if (op.priority && op.priority !== "normal") parts.push(`<span class="${op.priority === "high" ? "late" : ""}">${esc(T("pri." + op.priority))}</span>`);
   if (op.due) parts.push(esc(T("due", fmtDate(op.due))));
   if (op.status && op.status !== "todo") parts.push(esc(STATUS.find(s => s.key === op.status)?.label || op.status));
+  if (op.op === "add_project") parts.push(`<span class="mono" style="font-weight:600">${esc(String(op.projects || "").toUpperCase())}</span>`);
   if (op.op === "add_idea") parts.push(tagsOf(op).map((c, k) => `<span class="mono"${k ? "" : ' style="font-weight:600"'}>${esc(c)}</span>`).join(" "));
   if (op.description) parts.push(esc(op.description));
   if (op.notes) parts.push(esc(op.notes));
