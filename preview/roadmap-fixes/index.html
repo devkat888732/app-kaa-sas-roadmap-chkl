@@ -366,7 +366,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "1bcd7ee", "preview": "roadmap-fixes"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "693d56e", "preview": "roadmap-fixes"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -555,6 +555,12 @@ if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.sli
  * Telegram's light / dark when no theme was chosen here, full height, no address-bar tab hash (Telegram keeps its own) */
 const TG_APP = document.documentElement.classList.contains("tg-app");
 { const t = new URLSearchParams(location.search).get("tab"); if (TABS.some(x => x.key === t)) ui.tab = t; }
+// «Скрыть готовые» is remembered (Kaa, SASMP-U-001): a jump to a task clears the other filters but keeps it, and shows
+// that one task even when it's done (revealTask — for this visit, not saved)
+let revealTask = null;
+function jumpToChecklist(taskId = null) {
+  ui.tab = "checklist"; Object.assign(ui, { q: "", status: "", area: "", owner: "" }); revealTask = taskId;
+}
 let reviewFocus = null;   // roadmap/review-focus__ai.yaml: { updated, files, branches }
 let doc = null, header = "", fileSha = null, tree = [], treeTruncated = false, commits = [], contents = {}, derived = {};
 let pending = [], saveTimer = null, savebarTimer = null, saving = false, lastSave = null, saveError = null, openEditor = null, loadError = null, loading = false;
@@ -986,7 +992,7 @@ function renderSummary() {
 function matches(t) {
   const q = ui.q.trim().toLowerCase(), st = effStatus(t);
   return (!ui.area || t.area === ui.area) && (!ui.owner || t.owner === ui.owner) && (!ui.status || st === ui.status) &&
-    (!ui.hideDone || st !== "done") && (!q || [t.id, t.title, t.notes, ...(t.links || [])].join(" ").toLowerCase().includes(q));
+    (!ui.hideDone || st !== "done" || t.id === revealTask) && (!q || [t.id, t.title, t.notes, ...(t.links || [])].join(" ").toLowerCase().includes(q));
 }
 const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? "selected" : ""}>${esc(l)}</option>`;
 
@@ -1172,11 +1178,11 @@ function bind() {
     tg.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } };
   }
   root.querySelectorAll("[data-rm-ms]").forEach(b => b.onclick = () => {
-    ui.tab = "checklist"; Object.assign(ui, { q: "", status: "", area: "", owner: "", hideDone: false }); render();
+    jumpToChecklist(); render();
     document.querySelector(`[data-fb="milestone-${CSS.escape(b.dataset.rmMs)}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" });
   });
   root.querySelectorAll("[data-rm-task]").forEach(b => b.onclick = () => {
-    ui.tab = "checklist"; Object.assign(ui, { q: "", status: "", area: "", owner: "", hideDone: false }); openEditor = "task:" + b.dataset.rmTask; render();
+    jumpToChecklist(b.dataset.rmTask); openEditor = "task:" + b.dataset.rmTask; render();
     document.querySelector(`[data-fb="task-${CSS.escape(b.dataset.rmTask)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
   });
   root.querySelectorAll("[data-goal-edit]").forEach(b => b.onclick = () => { openEditor = "goal"; render(); root.querySelector('[data-goal-form] input[name="title"]')?.focus(); });
@@ -1189,8 +1195,8 @@ function bind() {
   if (ui.tab === "checklist") {
     $("f-q").oninput = e => { ui.q = e.target.value; const pos = e.target.selectionStart; render(); $("f-q").focus(); $("f-q").setSelectionRange(pos, pos); };
     ["area", "owner", "status"].forEach(k => $("f-" + k).onchange = e => { ui[k] = e.target.value; render(); });
-    $("f-hide").onchange = e => { ui.hideDone = e.target.checked; render(); };
-    $("f-reset").onclick = () => { Object.assign(ui, { q: "", area: "", owner: "", status: "", hideDone: false }); render(); };
+    $("f-hide").onchange = e => { ui.hideDone = e.target.checked; revealTask = null; render(); };
+    $("f-reset").onclick = () => { Object.assign(ui, { q: "", area: "", owner: "", status: "" }); revealTask = null; render(); };   // «Скрыть готовые» is a setting, it stays
     $("add-ms").onclick = () => {
       const n = Math.max(0, ...doc.milestones.map(m => parseInt(String(m.id).slice(1), 10) || 0)) + 1;
       const ms = { id: "m" + n, title: T("newMs") };
@@ -1209,7 +1215,7 @@ function bind() {
   root.querySelectorAll("[data-add]").forEach(b => b.onclick = () => { openEditor = "new:" + b.dataset.add; render(); root.querySelector('[data-form="new"] input[name="title"]')?.focus(); });
   root.querySelectorAll("[data-edit-ms]").forEach(b => b.onclick = () => { openEditor = "ms:" + b.dataset.editMs; render(); });
   root.querySelectorAll("[data-cancel]").forEach(b => b.onclick = () => { openEditor = null; render(); });
-  root.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => { ui.tab = "checklist"; Object.assign(ui, { q: "", status: "", area: "", owner: "", hideDone: false }); openEditor = "task:" + b.dataset.jump; render(); });
+  root.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => { jumpToChecklist(b.dataset.jump); openEditor = "task:" + b.dataset.jump; render(); });
   root.querySelectorAll("[data-delete]").forEach(b => b.onclick = () => {
     if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = T("confirmDelete"); return; }
     edit({ type: "delete-task", id: b.dataset.delete }); openEditor = null; render();

@@ -102,6 +102,7 @@ const serialize = items => C.serializeFeedback(items, ownHead || HEAD_DEFAULT);
 const validate = items => C.validateFeedback(items, PROJECT);
 const nextId = (items, type) => C.nextFeedbackId(items, PROJECT, type);
 const nowMsk = () => C.nowMsk();
+let itemOpened = false;
 async function load() {
   if (pending.length || saving) return;   // local edits go out first; their save refreshes the file
   const get = path => gh(`${repoPath()}/contents/${path}?ref=${encodeURIComponent(cfg.branch)}`).catch(e => { if (e.status === 404) return null; throw e; });
@@ -111,6 +112,9 @@ async function load() {
     else { own = []; ownSha = null; ownHead = ""; }
     others = b ? parseItems(b64decode(b.content)).filter(i => i.project !== PROJECT) : [];
     othersLoaded = !!b; loadErr = null;
+    // ?item=SASMP-B-006 (the bot's «🔗 На странице» under a saved bug / update): open it once, after the first load
+    const want = new URLSearchParams(location.search).get("item");
+    if (want && !itemOpened && allItems().some(i => i.id === want)) { itemOpened = true; setTimeout(() => openItem(want), 0); }
   } catch (e) {
     loadErr = T("fb.loadErr") + e.message;
     if (!own) own = [];
@@ -255,11 +259,6 @@ function resolve(path) {
   return el;
 }
 function under(x, y) { return document.elementsFromPoint(x, y).filter(own_); }
-function levelArea(el) {   // the marked area at the current level that contains el
-  let a = el && el.closest("[data-fb]");
-  while (a) { const p = markedParent(a); if (p === pick.scope) return a; if (!p) return null; a = p; }
-  return null;
-}
 function selectorOf(el) {
   const parts = [];
   for (let a = el, i = 0; a && a !== document.body && i < 4; a = a.parentElement, i++) {
@@ -347,16 +346,19 @@ function goUp() {
   if (pick.sel && pick.sel !== "page") { const p = markedParent(pick.sel); if (p) setLevel(markedParent(p), p); }
   else if (pick.scope) setLevel(markedParent(pick.scope), pick.scope);
 }
+// the area under the pointer: the innermost marked one (the task, not the whole checklist — SASMP-B-001 of the site);
+// «Выше» and the crumbs go out from there
+const deepArea = el => { const a = el && el.closest("[data-fb]"); return a && own_(a) ? a : null; };
 overlay.addEventListener("pointermove", e => {
   if (!pick) return;
-  const a = levelArea(under(e.clientX, e.clientY)[0]);
-  if (a && a !== pick.sel) place(hoverHl, a); else hoverHl.hidden = true;
+  const a = deepArea(under(e.clientX, e.clientY)[0]);
+  if (a && a !== pick.sel) place(hoverHl, a, locationOf(a)); else hoverHl.hidden = true;
 });
 overlay.addEventListener("pointerleave", () => { hoverHl.hidden = true; });
 overlay.addEventListener("click", e => {
   if (!pick) return;
-  const target = under(e.clientX, e.clientY)[0], a = levelArea(target);
-  if (a) setLevel(pick.scope, a, target);
+  const target = under(e.clientX, e.clientY)[0], a = deepArea(target);
+  if (a) setLevel(markedParent(a), a, target);
 });
 [bar, panel].forEach(el => el.addEventListener("click", e => {
   const crumb = e.target.closest("[data-crumb]");
@@ -624,7 +626,8 @@ function bindView(rootEl) {
 let flashEl = null, flashTimer = null;
 function showOnPage(anchor) {
   const tab = anchor.split("/").find(seg => TABS.some(t => t.key === seg));
-  if (tab) { ui.tab = tab; if (tab === "checklist") Object.assign(ui, { q: "", status: "", area: "", owner: "", hideDone: false }); }
+  if (tab === "checklist") jumpToChecklist((anchor.match(/task-([A-Z]+-\d+)/) || [])[1] || null);
+  else if (tab) ui.tab = tab;
   openId = null; render();
   requestAnimationFrame(() => {
     const el = resolve(anchor);

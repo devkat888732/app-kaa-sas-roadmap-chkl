@@ -19,7 +19,7 @@ C.AGENT_EVENT_OPS = ["add_event", "update_event", "skip_event", "remove_event"];
 /* requests, not changes: the Штаб bot does them at once (a wallpaper from her data; a screen of the bot); the page can't */
 C.AGENT_BOT_OPS = ["make_wallpaper", "show_view"];
 C.WALLPAPER_VIEWS = ["tasks", "ideas", "roadmap", "calendar", "last"];
-C.SHOW_VIEWS = ["week", "tasks", "status", "review", "history", "walls"];
+C.SHOW_VIEWS = ["week", "tasks", "ideas", "status", "review", "history", "walls"];
 C.AGENT_FIELDS = ["ref", "task_id", "milestone_id", "title", "area", "status", "owner", "priority", "due", "notes", "description", "feedback_type", "projects",
   "event_id", "time", "minutes", "repeat", "dates", "starts", "ends", "component", "view"];
 C.agentSchema = () => {
