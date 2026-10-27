@@ -4,17 +4,26 @@
 # Registry of kaa projects. The code goes into every id: bugs / updates (<CODE>-B-001, <CODE>-U-001) and ideas (<CODE>-I-001),
 # and names the folder projects/<CODE>/. Codes: 2–5 uppercase Latin letters, unique, never changed once ids exist.
 # Fields: code, name, description; repo (owner/repo, if the project has one); url (live address);
-# items_file / merged_copy (feedback, only for products with the report widget) — see feedback/README.md.
+# items_file / merged_copy (feedback, only for products with the report widget) — see feedback/README.md;
+# branch (where those files live, if not the default branch).
 
 projects:
   - code: SASMP
-    name: "SAS kaa Roadmap and SAS knowledge base"
+    name: "kaa Roadmap and SAS knowledge base"
     description: 'Roadmap page, SAS macro knowledge base, blog'
     repo: devkat888732/kaa_sas_knwbase
     url: https://devkat888732.github.io/app-kaa-sas-roadmap-chkl/
     items_file: roadmap/feedback/items-SASMP__ai.yaml
     merged_copy: roadmap/feedback/all-projects__ai.yaml
     ideas_source: roadmap/ideas/captured__ai.yaml
+  - code: SASMS
+    name: "SAS Macro Studio"
+    description: 'Web studio to design, improve and document SAS macros with diagrams, tables and an AI; tasks with a calendar'
+    repo: devkat888732/kaa-sas-macro-schemas
+    branch: repo-setup   # the studio's data branch (its only development branch); items_file and merged_copy live there
+    url: https://devkat888732.github.io/app-kaa-sas-macro-studio/   # once deployed (studio/DEPLOY__ai.md)
+    items_file: feedback/items-SASMS__ai.yaml
+    merged_copy: feedback/all-projects__ai.yaml
   - code: SASPL
     name: "SAS macro platform"
     description: "Public site for Kaa's SAS macros: videos, interactive models, articles, code"
