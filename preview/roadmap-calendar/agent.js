@@ -143,7 +143,7 @@ async function ask(text) {
  * → { result, model }. Used by the agent and by «🔄 Пересобрать» of the review-first banner. */
 async function askWith(msgs, { schema, parse, onAttempt } = {}) {
   const attempts = [];
-  const orHeaders = { "HTTP-Referer": location.origin + location.pathname, "X-Title": "SAS kaa Roadmap" };
+  const orHeaders = { "HTTP-Referer": location.origin + location.pathname, "X-Title": "kaa Roadmap" };
   const fallbacks = settings.fallbacks.split(",").map(s => s.trim()).filter(Boolean);
   const orBody = extra => ({ ...(fallbacks.length ? { models: [settings.model, ...fallbacks] } : { model: settings.model }), messages: msgs, temperature: 0.2, ...extra });
   if (settings.viaBot && cfg.token) attempts.push(["Штаб", async () => {
