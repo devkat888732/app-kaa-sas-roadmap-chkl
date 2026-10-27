@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SAS kaa Roadmap</title>
+<title>kaa Roadmap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -256,7 +256,7 @@ tbody tr:last-child td { border-bottom: 0; }
   <header>
     <div>
       <div class="label" id="repo-label">kaa_sas_knwbase</div>
-      <h1>SAS kaa <span>Roadmap</span></h1>
+      <h1>kaa <span>Roadmap</span></h1>
     </div>
     <div class="side">
       <button class="btn ghost" type="button" id="focus-show" hidden></button>
@@ -791,7 +791,7 @@ function renderMeta() {
   if (DEFAULTS.preview) {
     const b = $("preview-banner");
     b.hidden = false; b.innerHTML = T("previewBanner", esc(DEFAULTS.preview), esc(cfg.branch));
-    document.title = "[preview] SAS kaa Roadmap";
+    document.title = "[preview] kaa Roadmap";
   }
   $("repo-label").textContent = `${cfg.owner}/${cfg.repo}`;
   $("meta").innerHTML = cfg.token ? `
