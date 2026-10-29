@@ -19,7 +19,7 @@ C.AGENT_EVENT_OPS = ["add_event", "update_event", "skip_event", "remove_event"];
 /* requests, not changes: the Штаб bot does them at once (a wallpaper from her data; a screen of the bot); the page can't */
 C.AGENT_BOT_OPS = ["make_wallpaper", "show_view"];
 C.WALLPAPER_VIEWS = ["tasks", "ideas", "roadmap", "calendar", "last"];
-C.SHOW_VIEWS = ["week", "tasks", "ideas", "status", "review", "history", "walls"];
+C.SHOW_VIEWS = ["week", "events", "tasks", "ideas", "status", "review", "history", "walls"];
 C.AGENT_FIELDS = ["ref", "task_id", "milestone_id", "title", "area", "status", "owner", "priority", "due", "notes", "description", "feedback_type", "projects",
   "event_id", "time", "minutes", "repeat", "dates", "starts", "ends", "place", "component", "view"];
 C.agentSchema = () => {
@@ -92,6 +92,10 @@ C.agentProblems = (op, ops, data, projects, events = []) => {
   if (C.AGENT_EVENT_OPS.includes(op.op)) { C.agentEventProblems(op, a => e(...a), events); return out; }
   if (op.op === "make_wallpaper" && op.view && !C.WALLPAPER_VIEWS.includes(op.view)) e("ag.inv.field", "view", op.view);
   if (op.op === "show_view" && !C.SHOW_VIEWS.includes(op.view)) e("ag.inv.field", "view", op.view || "—");
+  if (op.op === "show_view" && op.view === "events") {   // the period: dates, the end not before the start
+    [op.starts, op.ends].forEach(d => { if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) e("ag.inv.date", d); });
+    if (op.starts && op.ends && op.ends < op.starts) e("ag.inv.date", `${op.starts} … ${op.ends}`);
+  }
   const msOk = id => !id || msIds.has(id) || refs.has(id);
   if (op.op === "add_task") {
     if (!op.title) e("ag.inv.title");

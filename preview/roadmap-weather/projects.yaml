@@ -9,7 +9,7 @@
 
 projects:
   - code: SASMP
-    name: "SAS kaa Roadmap and SAS knowledge base"
+    name: "kaa Roadmap and SAS knowledge base"
     description: 'Roadmap page, SAS macro knowledge base, blog'
     repo: devkat888732/kaa_sas_knwbase
     url: https://devkat888732.github.io/app-kaa-sas-roadmap-chkl/

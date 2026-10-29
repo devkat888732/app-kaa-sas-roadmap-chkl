@@ -125,6 +125,26 @@ C.occurrences = (events, from, to) => {
     events.forEach(e => { if (C.eventOn(e, d)) out.push({ date: d, time: e.time || "", minutes: e.minutes || "", id: e.id, title: e.title, event: e }); });
   return out.sort((a, b) => a.date.localeCompare(b.date) || (a.time || "").localeCompare(b.time || "") || a.id.localeCompare(b.id));
 };
+/* «покажи поездки в декабре и январе», «когда тренировки в ноябре»: the events of from..to that match her words.
+ * query: "" = every event; trip words («поездки», «путешествия», «командировки») = the trips (an event with a place,
+ * or titled «Поездка …»); other words = events whose title or place has one of them (by stem: «тренировки» finds
+ * «Тренировка»). One entry per run of consecutive dates of one event (a trip of Sat–Sun is one line):
+ * { id, title, time, minutes, place, from, to, count } sorted by date and time. */
+C.TRIP_WORDS = /поезд|путешеств|выезд|командиров|отпуск|\btrips?\b|travel/i;
+C.isTrip = e => !!String(e.place || "").trim() || /^\s*(поездк|путешеств|командиров|отпуск)/i.test(String(e.title || ""));
+C.findEvents = (events, from, to, query = "") => {
+  const q = String(query || "").trim().toLowerCase(), trips = C.TRIP_WORDS.test(q);
+  const stems = trips ? [] : q.split(/[^\p{L}\p{N}]+/u).filter(w => w.length > 2).map(w => w.length > 5 ? w.slice(0, w.length - 2) : w);
+  const hit = e => trips ? C.isTrip(e) : !stems.length || stems.some(st => `${e.title || ""} ${e.place || ""}`.toLowerCase().includes(st));
+  const out = [], last = {};
+  C.occurrences(events.filter(hit), from, to).forEach(o => {
+    const run = last[o.id];
+    if (run && run.to === C.addDays(o.date, -1)) { run.to = o.date; run.count++; return; }
+    last[o.id] = { id: o.id, title: o.title, time: o.time, minutes: o.minutes, place: String(o.event.place || "").trim(), from: o.date, to: o.date, count: 1 };
+    out.push(last[o.id]);
+  });
+  return out;
+};
 // first date of the event on or after a date (within a year), or ""
 C.nextOccurrence = (e, from) => {
   for (let d = from, i = 0; i < 400; i++, d = C.addDays(d, 1)) if (C.eventOn(e, d)) return d;
