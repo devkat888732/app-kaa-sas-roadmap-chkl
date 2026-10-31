@@ -140,7 +140,8 @@ C.occurrences = (events, from, to) => {
  * «Тренировка»). One entry per run of consecutive dates of one event (a trip of Sat–Sun is one line):
  * { id, title, time, minutes, place, from, to, count } sorted by date and time. */
 C.TRIP_WORDS = /поезд|путешеств|выезд|командиров|отпуск|\btrips?\b|travel/i;
-C.isTrip = e => !!String(e.place || "").trim() || /^\s*(поездк|путешеств|командиров|отпуск)/i.test(String(e.title || ""));
+// a trip: its name says so («Поездка …», «Отпуск»), or she put it into «Поездки»; a place alone is where an event is, not a trip
+C.isTrip = e => String(e.category || "").trim().toLowerCase() === "поездки" || /^\s*(поездк|путешеств|командиров|отпуск|выезд)/i.test(String(e.title || ""));
 C.findEvents = (events, from, to, query = "") => {
   const q = String(query || "").trim().toLowerCase(), trips = C.TRIP_WORDS.test(q);
   const stems = trips ? [] : q.split(/[^\p{L}\p{N}]+/u).filter(w => w.length > 2).map(w => w.length > 5 ? w.slice(0, w.length - 2) : w);
