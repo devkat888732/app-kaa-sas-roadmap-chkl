@@ -45,7 +45,7 @@ Every operation has **all** of these keys; a key that doesn't apply to the opera
 | `update_event` | `event_id` + at least one field to change | `title`, `time`, `minutes`, `repeat` (`none` = stop repeating), `dates`, `starts`, `ends`, `place`, `notes` |
 | `skip_event` | `event_id`, `dates` (the dates it doesn't happen) | — |
 | `remove_event` | `event_id` | — |
-| `make_wallpaper` | `view` — the data on it: `tasks`, `ideas`, `roadmap` (goal and milestones), `calendar`, or `last` (a change to the wallpaper made last: another background, look, data); `null` if she doesn't say | — |
+| `make_wallpaper` | `view` — the data on it: `tasks`, `ideas`, `roadmap` (goal and milestones), `calendar`, or `last` (a change to the wallpaper made last, without saying what to put on a new one: «убери сделанное», «другой фон», «темнее»); a request that names what to put on it («сделай заставку с расписанием на неделю, на фоне — ночной лес») is a new wallpaper with its own `view`, never `last`; `null` if she doesn't say | — |
 | `show_view` | `view` — the screen to open: `week` (this week's calendar and deadlines), `events` (the events of a period, found by her words — set `starts`, `ends` and `title`), `tasks`, `ideas` (her open ideas), `status`, `review` (pull requests), `history` (her requests), `walls` (her wallpapers) | for `events`: `starts`, `ends` — the period (YYYY-MM-DD; without them — the next 30 days); `title` — what to look for in her words («поездки», «тренировки», «концерт»), `null` for all events |
 
 `milestone_id` of a new task may be the `ref` of an `add_milestone` in the same answer.
