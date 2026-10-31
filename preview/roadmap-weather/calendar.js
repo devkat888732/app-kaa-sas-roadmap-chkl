@@ -12,7 +12,7 @@
  * splitHeader, render, today, effStatus, fbA, plural); toasts use feedback.css.
  * The weather of the next 8 days (core/weather.js; the bot fetches it, POST <bot>/weather): rain / sun «точно» by hour, for Kaa's
  * place (this device's geolocation once she allows it, else the place she sent the bot) or a trip's place on its days.
- * Exposes window.CAL = { load, events, busy, count, renderView, bindView, renderWeek, bindWeek, applyAgent, ruleText, opText, weather }.
+ * Exposes window.CAL = { load, events, categories, busy, count, renderView, bindView, renderWeek, bindWeek, applyAgent, ruleText, opText, weather }.
  */
 (() => {
 "use strict";
@@ -34,7 +34,7 @@ Object.assign(I18N.en, {
   "cal.r.month": (n, d) => (n > 1 ? `every ${n} months` : "monthly") + ` on the ${d}th`, "cal.r.from": d => `from ${d}`, "cal.r.until": d => `until ${d}`,
   "cal.r.dates": d => d, "cal.r.except": d => `not ${d}`,
   "cal.phone": "Phone calendar: the Штаб bot → 📅 Неделя → 📲 Подписка — the events appear in your phone's calendar and update by themselves.",
-  "fba.calendar": "Calendar", "fba.week": "The week", "cal.f.place": "Where (a town, for the weather)", "cal.f.placePh": "empty = where you are",
+  "fba.calendar": "Calendar", "fba.week": "The week", "cal.f.place": "Where (a town, for the weather)", "cal.f.category": "Category (empty — found by the name)", "cal.f.placePh": "empty = where you are",
   "wx.ask": "📍 Weather for where I am", "wx.loading": "weather…", "wx.off": "Weather: the bot doesn't answer", "wx.nohome": "Weather: tell the bot where you are (📅 Неделя → 📍) or allow the location here",
   "wx.denied": "The browser didn't give the location: weather for the place you sent the bot", "wx.note": "«Точно» — almost all forecast variants agree (≥ 80 %), «возможен» — from 30 %. Local hours.",
   "wx.src": (s, n) => `Open-Meteo: ${s}${n ? ` · ${n} variants` : ""}`
@@ -53,7 +53,7 @@ Object.assign(I18N.ru, {
   "cal.r.month": (n, d) => (n > 1 ? `раз в ${n} ${plural(n, "месяц", "месяца", "месяцев")}` : "каждый месяц") + `, ${d}-го`, "cal.r.from": d => `с ${d}`, "cal.r.until": d => `до ${d}`,
   "cal.r.dates": d => d, "cal.r.except": d => `кроме ${d}`,
   "cal.phone": "Календарь в телефоне: бот Штаб → 📅 Неделя → 📲 Подписка — события появятся в календаре телефона и будут обновляться сами.",
-  "fba.calendar": "Календарь", "fba.week": "Неделя", "cal.f.place": "Где (город — для погоды)", "cal.f.placePh": "пусто — там, где ты",
+  "fba.calendar": "Календарь", "fba.week": "Неделя", "cal.f.place": "Где (город — для погоды)", "cal.f.category": "Категория (пусто — по названию)", "cal.f.placePh": "пусто — там, где ты",
   "wx.ask": "📍 Погода для моего места", "wx.loading": "погода…", "wx.off": "Погода: бот не отвечает", "wx.nohome": "Погода: скажи боту, где ты (📅 Неделя → 📍), или разреши здесь геолокацию",
   "wx.denied": "Браузер не дал геолокацию: погода для места, которое ты отправила боту", "wx.note": "«Точно» — почти все варианты прогноза сходятся (≥ 80 %), «возможен» — от 30 %. Часы местные.",
   "wx.src": (s, n) => `Open-Meteo: ${s}${n ? ` · ${n} вариантов` : ""}`
@@ -75,7 +75,7 @@ function toast(html, ms, retry) {
 toastEl.addEventListener("click", e => { if (e.target.closest('[data-act="retry"]')) { saveErr = null; toastEl.hidden = true; save(); } });
 
 /* ---------- data ---------- */
-let events = null, head = "", sha = null, loadErr = null, pending = [], saving = false, saveTimer = null, saveErr = null;
+let events = null, head = "", cats = null, sha = null, loadErr = null, pending = [], saving = false, saveTimer = null, saveErr = null;
 const v = Object.assign({ month: "", day: "", view: "" }, store.get("calView", {}));
 let form = null;   // null | { id: "" (new) | event id, date }
 
@@ -83,8 +83,8 @@ async function load() {
   if (pending.length || saving) return;
   try {
     const f = await gh(`${repoPath()}/contents/${PATH}?ref=${encodeURIComponent(cfg.branch)}`).catch(e => { if (e.status === 404) return null; throw e; });
-    if (f) { const text = b64decode(f.content); head = splitHeader(text)[0]; events = C.parseEvents(text); sha = f.sha; }
-    else { events = []; head = ""; sha = null; }
+    if (f) { const text = b64decode(f.content); head = splitHeader(text)[0]; events = C.parseEvents(text); cats = C.parseCategories(text); sha = f.sha; }
+    else { events = []; head = ""; cats = null; sha = null; }
     loadErr = null;
   } catch (e) {
     loadErr = T("cal.loadErr") + e.message;
@@ -103,7 +103,7 @@ async function save() {
   saving = true; toast(T("cal.saving"));
   const ops = pending.slice(), message = `calendar: ${C.describeEventOps(ops)}\n\nSaved from the roadmap page.`;
   const put = (list, s) => gh(`${repoPath()}/contents/${PATH}`, { method: "PUT",
-    body: { message, content: b64encode(C.serializeEvents(list, head || C.calendarHeadDefault())), branch: cfg.branch, ...(s ? { sha: s } : {}) } });
+    body: { message, content: b64encode(C.serializeEvents(list, head || C.calendarHeadDefault(), cats)), branch: cfg.branch, ...(s ? { sha: s } : {}) } });
   try {
     let res;
     try { res = await put(events, sha); }
@@ -112,7 +112,7 @@ async function save() {
       // the file changed meanwhile (the bot, another tab): replay the same operations on the newer file
       const latest = await gh(`${repoPath()}/contents/${PATH}?ref=${encodeURIComponent(cfg.branch)}`).catch(x => { if (x.status === 404) return null; throw x; });
       const base = latest ? C.parseEvents(b64decode(latest.content)) : [];
-      if (latest) head = splitHeader(b64decode(latest.content))[0];
+      if (latest) { head = splitHeader(b64decode(latest.content))[0]; cats = C.parseCategories(b64decode(latest.content)); }
       ops.forEach(op => C.applyEventOp(base, op));
       res = await put(base, latest ? latest.sha : null);
       pending.slice(ops.length).forEach(op => C.applyEventOp(base, op));
@@ -163,6 +163,7 @@ function opText(op) {
   const rule = ruleText({ ...e, from: op.starts || (op.op === "add_event" && e.every ? today() : "") });
   if (rule) parts.push(rule);
   if (op.place) parts.push("📍" + op.place);
+  if (op.category) parts.push("🏷 " + op.category);
   if (op.notes) parts.push(op.notes);
   return parts.join(" · ");
 }
@@ -322,6 +323,8 @@ function renderForm() {
       <label class="field"><span>${T("cal.f.until")}</span><input type="date" name="until" value="${esc(x.until)}"></label>
     </div>
     <label class="field"><span>${T("cal.f.place")}</span><input type="text" name="place" maxlength="80" value="${esc(x.place || "")}" placeholder="${T("cal.f.placePh")}"></label>
+    <label class="field"><span>${T("cal.f.category")}</span><input type="text" name="category" maxlength="${C.MAX_CATEGORY}" list="cal-cats" value="${esc(x.category || "")}" placeholder="${esc(C.categoryOf(x, cats))}">
+      <datalist id="cal-cats">${C.eventCategories(events || [], cats).filter(c => c !== C.CATEGORY_OTHER).map(c => `<option value="${esc(c)}">`).join("")}</datalist></label>
     <label class="field"><span>${T("cal.f.notes")}</span><input type="text" name="notes" value="${esc(x.notes || "")}"></label>
     <div class="actions"><div style="display:flex;gap:8px"><button class="btn primary" type="submit">${T("cal.f.save")}</button><button class="btn" type="button" data-cal-cancel>${T("cal.f.cancel")}</button></div></div>
   </form>`;
@@ -362,7 +365,7 @@ function bindView(root) {
       every: rep ? kind : "", interval: rep && +fd.get("interval") > 1 ? String(+fd.get("interval")) : "",
       days: kind === "week" ? fd.getAll("days") : [], month_day: kind === "month" ? String(fd.get("month_day") || "") : "",
       dates: rep ? (form.id ? (events.find(x => x.id === form.id)?.dates || []) : []) : C.asList(fd.get("dates")),
-      from: rep ? fd.get("from") || today() : "", until: rep ? fd.get("until") || "" : "", place: String(fd.get("place") || "").trim(), notes: String(fd.get("notes") || "").trim()
+      from: rep ? fd.get("from") || today() : "", until: rep ? fd.get("until") || "" : "", place: String(fd.get("place") || "").trim(), category: String(fd.get("category") || "").trim(), notes: String(fd.get("notes") || "").trim()
     };
     const probe = C.normEvent({ id: form.id || "EV-999", ...fields, except: [] }), errs = C.validateEvents([probe]);
     if (errs.length) { toast(esc(T("cal.f.bad") + errs.map(s => s.replace(/^EV-\d+: /, "")).join("; ")), 6000); return; }
@@ -382,5 +385,5 @@ function applyAgent(picked) {
   return out;
 }
 
-window.CAL = { load, weather: () => wx, events: () => events || [], busy: () => pending.length > 0 || saving, count, renderView, bindView, renderWeek, bindWeek, applyAgent, ruleText, opText, openDay };
+window.CAL = { load, weather: () => wx, events: () => events || [], categories: () => cats, busy: () => pending.length > 0 || saving, count, renderView, bindView, renderWeek, bindWeek, applyAgent, ruleText, opText, openDay };
 })();

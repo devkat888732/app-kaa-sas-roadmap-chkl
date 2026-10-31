@@ -99,7 +99,8 @@ function context() {
     openFeedback: window.FB && FB.openItems ? FB.openItems() : [],
     openIdeas: window.IDEAS ? IDEAS.openIdeas() : [],
     projects: window.IDEAS ? IDEAS.projects() : [],
-    events: window.CAL ? CAL.events() : []
+    events: window.CAL ? CAL.events() : [],
+    categories: window.CAL && CAL.categories ? CAL.categories() : null
   });
 }
 async function systemPrompt() {
