@@ -155,6 +155,20 @@ C.findEvents = (events, from, to, query = "") => {
   });
   return out;
 };
+/* the weekdays her words name: «субботы и воскресенья», «выходные» → [sat, sun], «будни» → mon…fri, «по средам» → [wed];
+ * C.weekdaysIn(text) → { days: [...] in week order, rest: the words without them } */
+C.WEEKDAY_WORDS = [
+  [/выходн\S*/gi, ["sat", "sun"]], [/будн\S*|рабоч\S*\s+дн\S*/gi, ["mon", "tue", "wed", "thu", "fri"]],
+  [/понедельник\S*|(^|[^а-яё])пн(?=[^а-яё]|$)/gi, ["mon"]], [/вторник\S*|(^|[^а-яё])вт(?=[^а-яё]|$)/gi, ["tue"]], [/сред(а|ы|у|ам|ой|е)?(?=[^а-яё]|$)|(^|[^а-яё])ср(?=[^а-яё]|$)/gi, ["wed"]],
+  [/четверг\S*|(^|[^а-яё])чт(?=[^а-яё]|$)/gi, ["thu"]], [/пятниц\S*|(^|[^а-яё])пт(?=[^а-яё]|$)/gi, ["fri"]], [/суббот\S*|(^|[^а-яё])сб(?=[^а-яё]|$)/gi, ["sat"]],
+  [/воскресень\S*|(^|[^а-яё])вс(?=[^а-яё]|$)/gi, ["sun"]],
+];
+C.weekdaysIn = text => {
+  let rest = String(text || ""); const days = new Set();
+  C.WEEKDAY_WORDS.forEach(([re, ds]) => { rest = rest.replace(re, m => { ds.forEach(d => days.add(d)); return m.match(/^[^а-яё]/i) ? m[0] : " "; }); });
+  rest = rest.replace(/(^|\s)(и|по|все|всех|каждую|каждый|каждое)(?=\s|$)/gi, " ").replace(/[,;]/g, " ").replace(/\s+/g, " ").trim();
+  return { days: C.WEEKDAYS.filter(d => days.has(d)), rest };
+};
 /* Categories of events (Kaa): few of them. Three obvious ones from the start, found by the event's words when it has
  * no category of its own; she makes others herself by giving an event a new category («тату — в категорию Личное»).
  * An event without one and not matching any is «Другое». A category exists while an event has it (no separate list). */

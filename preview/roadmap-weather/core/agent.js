@@ -96,6 +96,7 @@ C.agentProblems = (op, ops, data, projects, events = []) => {
   if (op.op === "show_view" && op.view === "events") {   // the period: dates, the end not before the start
     [op.starts, op.ends].forEach(d => { if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) e("ag.inv.date", d); });
     if (op.starts && op.ends && op.ends < op.starts) e("ag.inv.date", `${op.starts} … ${op.ends}`);
+    if (op.repeat && !C.parseRepeat(op.repeat)) e("ag.inv.repeat", op.repeat);   // the weekdays to show: week:sat,sun
   }
   const msOk = id => !id || msIds.has(id) || refs.has(id);
   if (op.op === "add_task") {
