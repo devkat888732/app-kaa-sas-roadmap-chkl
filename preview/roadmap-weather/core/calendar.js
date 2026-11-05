@@ -11,7 +11,7 @@ const C = root.RoadmapCore;
 if (!C || !C.clean) throw new Error("load roadmap/core/common.js before calendar.js");
 
 C.CALENDAR_PATH = "roadmap/calendar/events__ai.yaml";
-C.EVENT_FIELDS = ["id", "title", "time", "minutes", "every", "interval", "days", "month_day", "dates", "from", "until", "except", "place", "project", "category", "notes", "created"];
+C.EVENT_FIELDS = ["id", "title", "time", "minutes", "every", "interval", "days", "month_day", "dates", "from", "until", "except", "place", "project", "category", "status", "link", "source", "remind", "notes", "created"];
 C.EVENT_EVERY = ["day", "week", "month"];
 C.WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 C.EVENT_ID_RE = /^EV-(\d{3,})$/;
@@ -71,6 +71,9 @@ C.validateEvents = events => {
     if (!C.asText(e.title).trim()) errs.push(`${id}: no title`);
     if (C.asText(e.title).length > 100) errs.push(`${id}: title longer than 100 characters`);
     if (C.asText(e.category).length > C.MAX_CATEGORY) errs.push(`${id}: category longer than ${C.MAX_CATEGORY} characters`);
+    if (e.status && !C.EVENT_STATUSES.includes(e.status)) errs.push(`${id}: status must be ${C.EVENT_STATUSES.join(", ")}`);
+    if (e.link && !/^https?:\/\/\S+$/.test(e.link)) errs.push(`${id}: link must be an http(s) address`);
+    if (e.remind && !C.isDate(e.remind)) errs.push(`${id}: remind must be YYYY-MM-DD`);
     if (e.time && !C.isTime(e.time)) errs.push(`${id}: time must be HH:MM`);
     if (e.minutes && !/^\d+$/.test(e.minutes)) errs.push(`${id}: minutes must be a number`);
     if (!e.every && !e.dates.length) errs.push(`${id}: needs dates or every`);
@@ -128,10 +131,36 @@ C.eventOn = (e, d) => {
   return onRule(e, d);
 };
 // every occurrence in [from, to] (inclusive), sorted by date and time: { date, time, minutes, id, title, event }
+/* Possible events (Kaa): dates of events she may go to — a post's season of trips, a festival — not real plans yet.
+ * status: "" = a real event; "maybe" = possible (shown faded with ❔ everywhere); "going" = she signed up (real);
+ * "skip" = she won't go (gone from the calendar, kept in the list). link = the post about it, source = who runs it.
+ * Reminders to decide / check the news / sign up: 3 months, 1 month and 2 weeks before the start (those still ahead
+ * when it was added), and `remind` — «напомни позже». */
+C.EVENT_STATUSES = ["maybe", "going", "skip"];
+C.isMaybe = e => !!e && e.status === "maybe";
+C.REMIND_BEFORE = [[91, "за 3 месяца"], [30, "за месяц"], [14, "за 2 недели"]];
+C.eventStart = e => {
+  const ds = (e.dates || []).filter(C.isDate).sort();
+  const rep = e.every && C.isDate(e.from) ? C.nextOccurrence({ ...e, dates: [], except: [] }, e.from) : null;
+  return [ds[0], rep].filter(Boolean).sort()[0] || null;
+};
+// the last day of a run of consecutive dates from the start (a trip of 3 days → its 3rd)
+C.eventEnd = e => { const st = C.eventStart(e); if (!st) return null; let d = st; while ((e.dates || []).includes(C.addDays(d, 1))) d = C.addDays(d, 1); return d; };
+C.remindersOf = e => {
+  if (!C.isMaybe(e)) return [];
+  const start = C.eventStart(e); if (!start) return [];
+  const since = C.isDate(e.created) ? e.created : "0000-00-00";
+  const out = C.REMIND_BEFORE.map(([n, label]) => ({ date: C.addDays(start, -n), label })).filter(r => r.date >= since && r.date < start);
+  if (C.isDate(e.remind) && e.remind < start && !out.some(r => r.date === e.remind)) out.push({ date: e.remind, label: "как просила" });
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+};
+// the reminders of from..to: { date, id, event, label, start, end }
+C.reminders = (events, from, to) => (events || []).flatMap(e => C.remindersOf(e).filter(r => r.date >= from && r.date <= to)
+  .map(r => ({ ...r, id: e.id, event: e, start: C.eventStart(e), end: C.eventEnd(e) }))).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 C.occurrences = (events, from, to) => {
   const out = [];
   for (let d = from; d <= to; d = C.addDays(d, 1))
-    events.forEach(e => { if (C.eventOn(e, d)) out.push({ date: d, time: e.time || "", minutes: e.minutes || "", id: e.id, title: e.title, event: e }); });
+    events.forEach(e => { if (e.status !== "skip" && C.eventOn(e, d)) out.push({ date: d, time: e.time || "", minutes: e.minutes || "", id: e.id, title: e.title, maybe: C.isMaybe(e), event: e }); });
   return out.sort((a, b) => a.date.localeCompare(b.date) || (a.time || "").localeCompare(b.time || "") || a.id.localeCompare(b.id));
 };
 /* «покажи поездки в декабре и январе», «когда тренировки в ноябре»: the events of from..to that match her words.
@@ -296,7 +325,7 @@ const TZ = ["BEGIN:VTIMEZONE", "TZID:Europe/Moscow", "BEGIN:STANDARD", "DTSTART:
 function vevent({ uid, e, date, rule, now }) {
   const timed = !!e.time, t = timed ? e.time.replace(":", "") + "00" : "";
   const at = d => timed ? `;TZID=Europe/Moscow:${compact(d)}T${t}` : `;VALUE=DATE:${compact(d)}`;
-  const L = ["BEGIN:VEVENT", `UID:${uid}@kaa-roadmap`, `DTSTAMP:${stamp(now)}`, `SUMMARY:${icsText(e.title)}`, `DTSTART${at(date)}`,
+  const L = ["BEGIN:VEVENT", `UID:${uid}@kaa-roadmap`, `DTSTAMP:${stamp(now)}`, `SUMMARY:${icsText((C.isMaybe(e) ? "❔ " : "") + e.title)}`, `DTSTART${at(date)}`,
     timed ? `DURATION:PT${+e.minutes || 60}M` : `DTEND;VALUE=DATE:${compact(C.addDays(date, 1))}`];
   if (rule) {
     const p = [`FREQ=${{ day: "DAILY", week: "WEEKLY", month: "MONTHLY" }[e.every]}`];
@@ -310,7 +339,10 @@ function vevent({ uid, e, date, rule, now }) {
     if (ex.length) L.push(`EXDATE${timed ? ";TZID=Europe/Moscow:" + ex.map(d => compact(d) + "T" + t).join(",") : ";VALUE=DATE:" + ex.map(compact).join(",")}`);
   }
   if (e.place) L.push(`LOCATION:${icsText(e.place)}`);
-  if (e.notes) L.push(`DESCRIPTION:${icsText(e.notes)}`);
+  if (C.isMaybe(e)) L.push("STATUS:TENTATIVE", "TRANSP:TRANSPARENT");
+  if (e.link) L.push(`URL:${e.link}`);
+  const desc = [C.isMaybe(e) ? "Возможное событие — ещё не решено" : "", e.source ? `Кто проводит: ${e.source}` : "", e.notes || "", e.link || ""].filter(Boolean).join("\n");
+  if (desc) L.push(`DESCRIPTION:${icsText(desc)}`);
   L.push("END:VEVENT");
   return L;
 }
@@ -318,7 +350,11 @@ function vevent({ uid, e, date, rule, now }) {
 C.toICS = (events, { name = "Kaa · calendar", now = new Date() } = {}) => {
   const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//kaa//roadmap calendar//RU", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
     `X-WR-CALNAME:${icsText(name)}`, "X-WR-TIMEZONE:Europe/Moscow", "REFRESH-INTERVAL;VALUE=DURATION:PT1H", "X-PUBLISHED-TTL:PT1H", ...TZ];
-  events.forEach(e => {
+  events.filter(e => e.status !== "skip").forEach(e => {
+    // 🔔 the reminders of a possible event, as all-day items on their days
+    C.remindersOf(e).forEach(r => L.push("BEGIN:VEVENT", `UID:${e.id}-r-${compact(r.date)}@kaa-roadmap`, `DTSTAMP:${stamp(now)}`,
+      `SUMMARY:${icsText(`🔔 Решить: ${e.title} (${r.label})`)}`, `DTSTART;VALUE=DATE:${compact(r.date)}`, `DTEND;VALUE=DATE:${compact(C.addDays(r.date, 1))}`,
+      "TRANSP:TRANSPARENT", ...(e.link ? [`URL:${e.link}`] : []), `DESCRIPTION:${icsText(["Определиться, обновить информацию, записаться.", e.link || ""].filter(Boolean).join("\n"))}`, "END:VEVENT"));
     if (e.every && C.isDate(e.from)) {
       const first = C.nextOccurrence({ ...e, dates: [], except: [] }, e.from);
       if (first && (!e.until || first <= e.until)) L.push(...vevent({ uid: e.id, e, date: first, rule: true, now }));
