@@ -11,7 +11,7 @@ const C = root.RoadmapCore;
 if (!C || !C.clean) throw new Error("load roadmap/core/common.js before calendar.js");
 
 C.CALENDAR_PATH = "roadmap/calendar/events__ai.yaml";
-C.EVENT_FIELDS = ["id", "title", "time", "minutes", "every", "interval", "days", "month_day", "dates", "from", "until", "except", "place", "category", "notes", "created"];
+C.EVENT_FIELDS = ["id", "title", "time", "minutes", "every", "interval", "days", "month_day", "dates", "from", "until", "except", "place", "project", "category", "notes", "created"];
 C.EVENT_EVERY = ["day", "week", "month"];
 C.WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 C.EVENT_ID_RE = /^EV-(\d{3,})$/;
@@ -211,10 +211,26 @@ C.suggestCategories = (events, cats = null, skip = []) => {
     .map(t => { const hit = other.filter(e => t.re.test(String(e.title || ""))); return { name: t.name, ids: hit.map(e => e.id), titles: [...new Set(hit.map(e => e.title))] }; })
     .filter(x => x.ids.length >= 2);
 };
-// occurrences → [[category, count]] by count (more first), «Другое» last
-C.categoryCounts = (occ, cats = null) => {
+/* events of her projects (Kaa): counted under the project's name, not a category. An event's `project` (a registry
+ * code), or found in its name: the code as a word («infra» → INFRA) or a Latin word of the project's name. */
+C.projectLabel = p => {
+  const n = String(p.name || p.code || "").split(/\s+\(|\s+and\s+|\s+и\s+/)[0].trim();
+  return n && n.length <= 20 ? n : p.code;
+};
+C.eventProject = (e, projects) => {
+  if (!e || !Array.isArray(projects) || !projects.length) return null;
+  const own = String(e.project || "").trim().toUpperCase();
+  if (own) return projects.find(p => p.code === own) || null;
+  const words = String(e.title || "").toLowerCase().split(/[^a-zа-яё0-9-]+/i).filter(Boolean);
+  return projects.find(p => words.includes(String(p.code).toLowerCase()) ||
+    String(p.name || "").toLowerCase().split(/[^a-z0-9-]+/).some(w => w.length >= 4 && w !== "kaa" && words.includes(w))) || null;
+};
+// what an event is counted under on the wallpaper: its project's name, else its category
+C.eventGroup = (e, cats = null, projects = null) => { const p = C.eventProject(e, projects); return p ? C.projectLabel(p) : C.categoryOf(e, cats); };
+// occurrences → [[category or project, count]] by count (more first), «Другое» last
+C.categoryCounts = (occ, cats = null, projects = null) => {
   const n = {};
-  occ.forEach(o => { const c = C.categoryOf(o.event || o, cats); n[c] = (n[c] || 0) + 1; });
+  occ.forEach(o => { const c = C.eventGroup(o.event || o, cats, projects); n[c] = (n[c] || 0) + 1; });
   return Object.entries(n).sort((a, b) => (a[0] === C.CATEGORY_OTHER) - (b[0] === C.CATEGORY_OTHER) || b[1] - a[1] || a[0].localeCompare(b[0]));
 };
 // first date of the event on or after a date (within a year), or ""

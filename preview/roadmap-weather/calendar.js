@@ -164,6 +164,7 @@ function opText(op) {
   if (rule) parts.push(rule);
   if (op.place) parts.push("📍" + op.place);
   if (op.category) parts.push("🏷 " + op.category);
+  if (op.projects) parts.push("📁 " + op.projects);
   if (op.notes) parts.push(op.notes);
   return parts.join(" · ");
 }

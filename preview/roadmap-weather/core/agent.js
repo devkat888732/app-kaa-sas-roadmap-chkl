@@ -57,7 +57,7 @@ C.agentContext = (data, x) => {
     open_ideas: x.openIdeas || [],
     projects: x.projects || [],
     events: (x.events || []).map(e => ({ id: e.id, title: e.title, time: e.time || null, minutes: e.minutes || null, repeat: C.repeatOf ? C.repeatOf(e) || null : null,
-      dates: e.dates.length ? e.dates.join(",") : null, starts: e.from || null, ends: e.until || null, place: e.place || null, category: C.categoryOf(e, x.categories || null), skipped: e.except.length ? e.except.join(",") : null })),
+      dates: e.dates.length ? e.dates.join(",") : null, starts: e.from || null, ends: e.until || null, place: e.place || null, project: e.project || null, category: C.categoryOf(e, x.categories || null), skipped: e.except.length ? e.except.join(",") : null })),
     event_categories: C.eventCategories ? C.eventCategories(x.events || [], x.categories || null) : [],
     allowed: { area: C.AREAS, status: C.TASK_STATUSES, owner: C.OWNERS, priority: C.PRIORITIES, feedback_type: ["bug", "update"] }
   };
@@ -90,7 +90,7 @@ C.agentProblems = (op, ops, data, projects, events = []) => {
   const allowed = { area: C.AREAS, status: C.TASK_STATUSES, owner: C.OWNERS, priority: C.PRIORITIES };
   Object.entries(allowed).forEach(([f, ok]) => { if (op[f] && !ok.includes(op[f])) e("ag.inv.field", f, op[f]); });
   if (op.due && !/^\d{4}-\d{2}-\d{2}$/.test(op.due)) e("ag.inv.date", op.due);
-  if (C.AGENT_EVENT_OPS.includes(op.op)) { C.agentEventProblems(op, a => e(...a), events); return out; }
+  if (C.AGENT_EVENT_OPS.includes(op.op)) { C.agentEventProblems(op, a => e(...a), events, projects); return out; }
   if (op.op === "make_wallpaper" && op.view && !C.WALLPAPER_VIEWS.includes(op.view)) e("ag.inv.field", "view", op.view);
   if (op.op === "show_view" && !C.SHOW_VIEWS.includes(op.view)) e("ag.inv.field", "view", op.view || "—");
   if (op.op === "show_view" && op.view === "events") {   // the period: dates, the end not before the start
@@ -136,7 +136,7 @@ C.agentProblems = (op, ops, data, projects, events = []) => {
 };
 
 /* calendar proposals: report([key, ...args]) for each problem; events = the calendar (parsed) */
-C.agentEventProblems = (op, report, events = []) => {
+C.agentEventProblems = (op, report, events = [], projects = []) => {
   const e = (key, ...args) => report([key, ...args]);
   const dates = C.asList(op.dates);
   if (op.time && !C.isTime(op.time)) e("ag.inv.time", op.time);
@@ -146,13 +146,15 @@ C.agentEventProblems = (op, report, events = []) => {
   if (op.repeat && !C.parseRepeat(op.repeat)) e("ag.inv.repeat", op.repeat);
   if (op.starts && op.ends && op.ends < op.starts) e("ag.inv.ends");
   if (op.category && String(op.category).length > C.MAX_CATEGORY) e("ag.inv.field", "category", op.category);
+  // an event of one of her projects: its code from the registry
+  C.agentTags(op).forEach(code => { if (Array.isArray(projects) && projects.length && !projects.some(p => p.code === code)) e("ag.inv.code", code); });
   const known = () => events.some(x => x.id === op.event_id);
   if (op.op === "add_event") {
     if (!op.title) e("ag.inv.title");
     if (!op.repeat && !dates.length) e("ag.inv.when");
   } else if (op.op === "update_event") {
     if (!known()) e("ag.inv.event", op.event_id || "?");
-    if (!["title", "time", "minutes", "repeat", "dates", "starts", "ends", "place", "category", "notes"].some(f => op[f])) e("ag.inv.nothing");
+    if (!["title", "time", "minutes", "repeat", "dates", "starts", "ends", "place", "category", "projects", "notes"].some(f => op[f])) e("ag.inv.nothing");
   } else if (op.op === "skip_event") {
     if (!known()) e("ag.inv.event", op.event_id || "?");
     if (!dates.length) e("ag.inv.when");
@@ -180,6 +182,7 @@ C.agentEventOps = (proposals, events, today) => {
     if (op.op === "add_event" && twin(op, ruleOf(op) || {})) {
       const e = twin(op, ruleOf(op) || {}), fields = {};
       ["time", "minutes", "place", "category", "notes"].forEach(f => { if (op[f]) fields[f] = op[f]; });
+      if (C.agentTags(op).length) fields.project = C.agentTags(op)[0];
       if (op.starts) fields.from = op.starts;
       if (op.ends) fields.until = op.ends;
       run({ type: "update", id: e.id, fields });
@@ -187,11 +190,12 @@ C.agentEventOps = (proposals, events, today) => {
     } else if (op.op === "add_event") {
       const id = C.nextEventId(events), rule = ruleOf(op) || {};
       run({ type: "add", item: C.clean({ id, title: op.title, time: op.time || "", minutes: op.minutes || "", ...rule, dates: C.asList(op.dates),
-        from: rule.every ? op.starts || today : op.starts || "", until: op.ends || "", place: op.place || "", category: op.category || "", notes: op.notes || "", created: today }) });
+        from: rule.every ? op.starts || today : op.starts || "", until: op.ends || "", place: op.place || "", project: C.agentTags(op)[0] || "", category: op.category || "", notes: op.notes || "", created: today }) });
       results[i] = id;
     } else if (op.op === "update_event") {
       const fields = {}, rule = ruleOf(op);
       ["title", "time", "minutes", "place", "category", "notes"].forEach(f => { if (op[f]) fields[f] = op[f]; });
+      if (C.agentTags(op).length) fields.project = C.agentTags(op)[0];
       if (op.dates) fields.dates = C.asList(op.dates);
       if (op.starts) fields.from = op.starts;
       if (op.ends) fields.until = op.ends;
