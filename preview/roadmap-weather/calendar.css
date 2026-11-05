@@ -87,3 +87,8 @@ fieldset.cal-days { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: 
 .cal-dayview .wx-day { margin: 0 0 8px; font-size: 14px; }
 .cal-dayview .wx-day .wx { color: var(--text); }
 .cal-num .wx-icon { font-size: 12px; }
+
+/* ❔ possible events (Kaa): faded with ❔ everywhere; 🔔 the days to decide */
+.wk-item.is-maybe, .cal-chip.is-maybe, .cal-item.is-maybe { opacity: .55; font-style: italic; }
+.cal-chip.is-maybe { border-style: dashed; }
+.cal-item.is-remind b { color: var(--review); }

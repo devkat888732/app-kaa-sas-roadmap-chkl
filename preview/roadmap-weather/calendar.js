@@ -34,7 +34,9 @@ Object.assign(I18N.en, {
   "cal.r.month": (n, d) => (n > 1 ? `every ${n} months` : "monthly") + ` on the ${d}th`, "cal.r.from": d => `from ${d}`, "cal.r.until": d => `until ${d}`,
   "cal.r.dates": d => d, "cal.r.except": d => `not ${d}`,
   "cal.phone": "Phone calendar: the Штаб bot → 📅 Неделя → 📲 Подписка — the events appear in your phone's calendar and update by themselves.",
-  "fba.calendar": "Calendar", "fba.week": "The week", "cal.f.place": "Where (a town, for the weather)", "cal.f.category": "Category (empty — found by the name)", "cal.f.placePh": "empty = where you are",
+  "fba.calendar": "Calendar", "fba.week": "The week", "cal.f.place": "Where (a town, for the weather)", "cal.f.category": "Category (empty — found by the name)", "cal.f.status": "Is it real?", "cal.f.link": "The post about it",
+      "cal.st.real": "A real event", "cal.st.maybe": "❔ Possible — not decided", "cal.st.going": "✅ Signed up", "cal.st.skip": "✕ Won't go",
+      "cal.maybe": "possible", "cal.remind": t => `Decide: ${t}`, "cal.remindWhy": l => `possible event, ${l === "как просила" ? "as asked" : l.replace("за 3 месяца", "3 months before").replace("за месяц", "a month before").replace("за 2 недели", "2 weeks before")}: decide, check the news, sign up`, "cal.post": "the post", "cal.f.placePh": "empty = where you are",
   "wx.ask": "📍 Weather for where I am", "wx.loading": "weather…", "wx.off": "Weather: the bot doesn't answer", "wx.nohome": "Weather: tell the bot where you are (📅 Неделя → 📍) or allow the location here",
   "wx.denied": "The browser didn't give the location: weather for the place you sent the bot", "wx.note": "«Точно» — almost all forecast variants agree (≥ 80 %), «возможен» — from 30 %. Local hours.",
   "wx.src": (s, n) => `Open-Meteo: ${s}${n ? ` · ${n} variants` : ""}`
@@ -53,7 +55,9 @@ Object.assign(I18N.ru, {
   "cal.r.month": (n, d) => (n > 1 ? `раз в ${n} ${plural(n, "месяц", "месяца", "месяцев")}` : "каждый месяц") + `, ${d}-го`, "cal.r.from": d => `с ${d}`, "cal.r.until": d => `до ${d}`,
   "cal.r.dates": d => d, "cal.r.except": d => `кроме ${d}`,
   "cal.phone": "Календарь в телефоне: бот Штаб → 📅 Неделя → 📲 Подписка — события появятся в календаре телефона и будут обновляться сами.",
-  "fba.calendar": "Календарь", "fba.week": "Неделя", "cal.f.place": "Где (город — для погоды)", "cal.f.category": "Категория (пусто — по названию)", "cal.f.placePh": "пусто — там, где ты",
+  "fba.calendar": "Календарь", "fba.week": "Неделя", "cal.f.place": "Где (город — для погоды)", "cal.f.category": "Категория (пусто — по названию)", "cal.f.status": "Это точно?", "cal.f.link": "Пост о событии",
+      "cal.st.real": "Настоящее событие", "cal.st.maybe": "❔ Возможное — ещё не решила", "cal.st.going": "✅ Записалась", "cal.st.skip": "✕ Не поеду",
+      "cal.maybe": "возможное", "cal.remind": t => `Решить: ${t}`, "cal.remindWhy": l => `возможное событие, ${l}: определиться, обновить информацию, записаться`, "cal.post": "пост", "cal.f.placePh": "пусто — там, где ты",
   "wx.ask": "📍 Погода для моего места", "wx.loading": "погода…", "wx.off": "Погода: бот не отвечает", "wx.nohome": "Погода: скажи боту, где ты (📅 Неделя → 📍), или разреши здесь геолокацию",
   "wx.denied": "Браузер не дал геолокацию: погода для места, которое ты отправила боту", "wx.note": "«Точно» — почти все варианты прогноза сходятся (≥ 80 %), «возможен» — от 30 %. Часы местные.",
   "wx.src": (s, n) => `Open-Meteo: ${s}${n ? ` · ${n} вариантов` : ""}`
@@ -218,10 +222,12 @@ function renderWeek() {
     : wx.status === "off" ? `<span class="muted wx-state">${T("wx.off")}</span>`
     : wx.status === "nohome" || (!wxOn() && wx.status !== "idle" && !(wx.home && wx.home.src === "page")) ? `<button class="btn ghost wx-ask" type="button" data-wx-ask>${T("wx.ask")}</button>` : "";
   const item = it => {
-    const color = it.kind === "event" ? "var(--accent)" : it.kind === "milestone" ? "var(--review)" : `var(--${effStatus(doc.tasks.find(t => t.id === it.id) || { status: "todo" })})`;
+    const color = it.kind === "event" ? "var(--accent)" : it.kind === "remind" ? "var(--review)" : it.kind === "milestone" ? "var(--review)" : `var(--${effStatus(doc.tasks.find(t => t.id === it.id) || { status: "todo" })})`;
     const label = it.kind === "task" ? T("cal.task") : it.kind === "milestone" ? T("cal.ms") : "";
-    return `<li class="wk-item wk-${it.kind}" title="${esc((it.time ? it.time + " " : "") + it.title + (label ? " · " + label : ""))}">
-      <i class="dot" style="background:${color}"></i>${it.time ? `<span class="mono wk-time">${esc(it.time)}</span>` : it.kind === "milestone" ? `<span aria-hidden="true">⚑</span>` : it.kind === "task" ? `<span class="mono wk-time">${esc(it.id)}</span>` : ""}<span class="wk-title">${esc(it.title)}</span></li>`;
+    // ❔ a possible event, faded; 🔔 a day to decide about one (Kaa)
+    const title = it.kind === "remind" ? T("cal.remind", it.title) : (it.maybe ? "❔ " : "") + it.title;
+    return `<li class="wk-item wk-${it.kind}${it.maybe ? " is-maybe" : ""}" title="${esc((it.time ? it.time + " " : "") + title + (label ? " · " + label : ""))}">
+      <i class="dot" style="background:${color}"></i>${it.time ? `<span class="mono wk-time">${esc(it.time)}</span>` : it.kind === "milestone" ? `<span aria-hidden="true">⚑</span>` : it.kind === "remind" ? `<span aria-hidden="true">🔔</span>` : it.kind === "task" ? `<span class="mono wk-time">${esc(it.id)}</span>` : ""}<span class="wk-title">${esc(title)}</span></li>`;
   };
   return `<section class="panel week" aria-label="${T("cal.week")}"${fbA("week")}>
     <div class="wk-head"><span class="label">${T("cal.week")}</span>${any ? "" : `<span class="muted">${T("cal.weekEmpty")}</span>`}<span class="fb-spacer"></span>${wxHead}</div>
@@ -252,7 +258,7 @@ function renderView() {
   // a phone shows the list, except inside Telegram (opened to see the calendar as a calendar)
   const view = v.view || (narrow() && !document.documentElement.classList.contains("tg-app") ? "list" : "month");
   const sel = v.day && v.day.startsWith(month) ? v.day : (today().startsWith(month) ? today() : "");
-  const chip = o => `<span class="cal-chip" title="${esc(timeText(o.event) + " · " + o.title)}">${o.time ? `<span class="mono">${esc(o.time)}</span> ` : ""}${esc(o.title)}</span>`;
+  const chip = o => `<span class="cal-chip${o.maybe ? " is-maybe" : ""}" title="${esc(timeText(o.event) + " · " + o.title)}">${o.time ? `<span class="mono">${esc(o.time)}</span> ` : ""}${o.maybe ? "❔ " : ""}${esc(o.title)}</span>`;
   let body;
   if (view === "month") {
     const start = C.addDays(first, -C.WEEKDAYS.indexOf(C.weekdayOf(first))), cells = [];
@@ -291,10 +297,12 @@ function renderView() {
 }
 function renderItems(d) {
   const its = C.occurrences(events, d, d);
-  if (!its.length) return `<p class="muted" style="margin:0">${T("cal.dayEmpty")}</p>`;
-  return `<ul class="cal-items">${its.map(o => `<li class="cal-item"${fbA("event-" + o.id, o.title)}>
+  if (!its.length && !C.reminders(events, d, d).length) return `<p class="muted" style="margin:0">${T("cal.dayEmpty")}</p>`;
+  const rem = C.reminders(events, d, d);
+  return `<ul class="cal-items">${rem.map(r => `<li class="cal-item is-remind"><span class="mono cal-when">🔔</span>
+    <span class="cal-what"><b>${esc(T("cal.remind", r.event.title))}</b><span class="muted">${esc(T("cal.remindWhy", r.label))}${r.event.link ? ` · <a href="${esc(r.event.link)}" target="_blank" rel="noopener">${T("cal.post")}</a>` : ""}</span></span></li>`).join("")}${its.map(o => `<li class="cal-item${o.maybe ? " is-maybe" : ""}"${fbA("event-" + o.id, o.title)}>
     <span class="mono cal-when">${esc(timeText(o.event))}</span>
-    <span class="cal-what"><b>${esc(o.title)}</b><span class="muted">${esc(ruleText(o.event))}${C.wxPlaceOf(o.event) ? ` · 📍${esc(C.wxPlaceOf(o.event))}` : ""}</span>${o.event.notes ? `<span class="muted">${esc(o.event.notes)}</span>` : ""}</span>
+    <span class="cal-what"><b>${o.maybe ? "❔ " : ""}${esc(o.title)}</b><span class="muted">${o.maybe ? esc(T("cal.maybe")) + " · " : ""}${esc(ruleText(o.event))}${C.wxPlaceOf(o.event) ? ` · 📍${esc(C.wxPlaceOf(o.event))}` : ""}${o.event.source ? ` · 👥 ${esc(o.event.source)}` : ""}${o.event.link ? ` · <a href="${esc(o.event.link)}" target="_blank" rel="noopener">${T("cal.post")}</a>` : ""}</span>${o.event.notes ? `<span class="muted">${esc(o.event.notes)}</span>` : ""}</span>
     <span class="cal-acts">${o.event.every ? `<button class="btn ghost" type="button" data-cal-skip="${esc(o.id)}" data-date="${d}">${T("cal.skip")}</button>` : ""}
       <button class="btn ghost" type="button" data-cal-edit="${esc(o.id)}">${T("cal.edit")}</button>
       <button class="btn ghost danger" type="button" data-cal-del="${esc(o.id)}">${T("cal.del")}</button></span>
@@ -324,6 +332,8 @@ function renderForm() {
       <label class="field"><span>${T("cal.f.until")}</span><input type="date" name="until" value="${esc(x.until)}"></label>
     </div>
     <label class="field"><span>${T("cal.f.place")}</span><input type="text" name="place" maxlength="80" value="${esc(x.place || "")}" placeholder="${T("cal.f.placePh")}"></label>
+    <label class="field"><span>${T("cal.f.status")}</span><select name="status">${["", "maybe", "going", "skip"].map(st => `<option value="${st}"${(x.status || "") === st ? " selected" : ""}>${esc(T("cal.st." + (st || "real")))}</option>`).join("")}</select></label>
+    <label class="field"><span>${T("cal.f.link")}</span><input type="url" name="link" maxlength="300" value="${esc(x.link || "")}" placeholder="https://t.me/…"></label>
     <label class="field"><span>${T("cal.f.category")}</span><input type="text" name="category" maxlength="${C.MAX_CATEGORY}" list="cal-cats" value="${esc(x.category || "")}" placeholder="${esc(C.categoryOf(x, cats))}">
       <datalist id="cal-cats">${C.eventCategories(events || [], cats).filter(c => c !== C.CATEGORY_OTHER).map(c => `<option value="${esc(c)}">`).join("")}</datalist></label>
     <label class="field"><span>${T("cal.f.notes")}</span><input type="text" name="notes" value="${esc(x.notes || "")}"></label>
@@ -366,7 +376,7 @@ function bindView(root) {
       every: rep ? kind : "", interval: rep && +fd.get("interval") > 1 ? String(+fd.get("interval")) : "",
       days: kind === "week" ? fd.getAll("days") : [], month_day: kind === "month" ? String(fd.get("month_day") || "") : "",
       dates: rep ? (form.id ? (events.find(x => x.id === form.id)?.dates || []) : []) : C.asList(fd.get("dates")),
-      from: rep ? fd.get("from") || today() : "", until: rep ? fd.get("until") || "" : "", place: String(fd.get("place") || "").trim(), category: String(fd.get("category") || "").trim(), notes: String(fd.get("notes") || "").trim()
+      from: rep ? fd.get("from") || today() : "", until: rep ? fd.get("until") || "" : "", place: String(fd.get("place") || "").trim(), category: String(fd.get("category") || "").trim(), status: String(fd.get("status") || ""), link: String(fd.get("link") || "").trim(), notes: String(fd.get("notes") || "").trim()
     };
     const probe = C.normEvent({ id: form.id || "EV-999", ...fields, except: [] }), errs = C.validateEvents([probe]);
     if (errs.length) { toast(esc(T("cal.f.bad") + errs.map(s => s.replace(/^EV-\d+: /, "")).join("; ")), 6000); return; }
