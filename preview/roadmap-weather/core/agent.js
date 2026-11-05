@@ -62,6 +62,24 @@ C.agentContext = (data, x) => {
     allowed: { area: C.AREAS, status: C.TASK_STATUSES, owner: C.OWNERS, priority: C.PRIORITIES, feedback_type: ["bug", "update"] }
   };
 };
+/* a smaller CONTEXT for a request that doesn't fit a model's limit (Groq's free tier: 6–8 thousand tokens a minute):
+ * the open tasks only, no descriptions, events without empty fields, no closed ideas or feedback text */
+C.agentContextCompact = ctx => {
+  const nn = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v != null && v !== ""));
+  return {
+    ...ctx,
+    goal: ctx.goal ? { title: ctx.goal.title, due: ctx.goal.due || null } : null,
+    milestones: ctx.milestones.map(m => ({ id: m.id, title: m.title, due: m.due, tasks_total: m.tasks_total, tasks_done: m.tasks_done })),
+    tasks: ctx.tasks.filter(t => t.status !== "done").map(t => nn({ id: t.id, title: t.title, milestone: t.milestone, status: t.status, owner: t.owner, due: t.due })),
+    tasks_done_ids: ctx.tasks.filter(t => t.status === "done").map(t => t.id).join(","),
+    open_feedback: (ctx.open_feedback || []).map(f => nn({ id: f.id, title: f.title, type: f.type, status: f.status })),
+    open_ideas: (ctx.open_ideas || []).map(i => nn({ id: i.id, title: i.title })),
+    projects: (ctx.projects || []).map(p => ({ code: p.code, name: p.name })),
+    events: (ctx.events || []).map(nn),
+  };
+};
+// a rough token count (Cyrillic ≈ 2.3 characters a token, the rest ≈ 3.8): enough to choose a smaller context
+C.tokensAbout = text => { const t = String(text || ""), cyr = (t.match(/[а-яё]/gi) || []).length; return Math.ceil(cyr / 2.3 + (t.length - cyr) / 3.8); };
 C.agentUserMessage = (context, text) => "CONTEXT:\n" + JSON.stringify(context) + "\n\nMESSAGE:\n" + text;
 
 // the model's answer → { summary, questions, operations } with every field a string or null; throws { kind: "format" }
