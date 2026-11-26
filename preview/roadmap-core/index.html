@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SAS kaa Roadmap</title>
+<title>kaa Roadmap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -314,7 +314,7 @@ tbody tr:last-child td { border-bottom: 0; }
   <header data-fb="header">
     <div>
       <div class="label" id="repo-label">kaa_sas_knwbase</div>
-      <h1 data-fb="title">SAS kaa <span>Roadmap</span></h1>
+      <h1 data-fb="title">kaa <span>Roadmap</span></h1>
     </div>
     <div class="side">
       <button class="btn ghost" type="button" id="focus-show" data-fb="focus-show" hidden></button>
@@ -343,7 +343,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "build": "99362ac", "preview": "roadmap-core"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "build": "e29aa6d", "preview": "roadmap-core"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -519,6 +519,9 @@ const CFG_KEY = DEFAULTS.preview ? "cfg:preview" : "cfg";
 const cfg = Object.assign({}, DEFAULTS, store.get(CFG_KEY, {}), { token: store.get("token", null) || sessionToken() });
 function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); } catch { return null; } }
 const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false, rm: false }, store.get("ui", {}));
+// the page and every branch preview share one browser storage (devkat888732.github.io): a newer version may have saved a
+// tab this one doesn't have («calendar») — then this one opens the checklist instead of failing (Kaa, 2026-11-26)
+if (!TABS.some(t => t.key === ui.tab)) ui.tab = "checklist";
 if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
 let reviewFocus = null;   // roadmap/review-focus__ai.yaml: { updated, files, branches }
 let doc = null, header = "", fileSha = null, tree = [], treeTruncated = false, commits = [], contents = {}, derived = {};
@@ -794,7 +797,7 @@ function renderMeta() {
   if (DEFAULTS.preview) {
     const b = $("preview-banner");
     b.hidden = false; b.innerHTML = T("previewBanner", esc(DEFAULTS.preview), esc(cfg.branch));
-    document.title = "[preview] SAS kaa Roadmap";
+    document.title = "[preview] kaa Roadmap";
   }
   $("repo-label").textContent = `${cfg.owner}/${cfg.repo}`;
   $("meta").innerHTML = cfg.token ? `
