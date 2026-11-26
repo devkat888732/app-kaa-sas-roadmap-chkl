@@ -366,7 +366,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 <script>
 /* Build-time defaults (replaced by build.py). */
-const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "4a48ce7", "preview": "roadmap-fixes"};
+const DEFAULTS = /*__ROADMAP_CONFIG__*/{"owner": "devkat888732", "repo": "kaa_sas_knwbase", "branch": "main", "project": "SASMP", "feedback_items": "roadmap/feedback/items-SASMP__ai.yaml", "feedback_all": "roadmap/feedback/all-projects__ai.yaml", "ideas_source": "roadmap/ideas/captured__ai.yaml", "ideas_all": "roadmap/ideas/all-ideas__ai.yaml", "ideas_projects": "roadmap/ideas/projects__ai.yaml", "calendar": "roadmap/calendar/events__ai.yaml", "build": "bc4334e", "preview": "roadmap-fixes"};
 const TASKS_PATH = "roadmap/tasks__ai.yaml";
 // labels are getters so they follow the current language
 const STATUS = ["todo", "doing", "review", "done", "blocked"].map(key => ({ key, get label() { return T("st." + key); } }));
@@ -550,6 +550,9 @@ const cfg = Object.assign({}, DEFAULTS, store.get(CFG_KEY, {}), { token: store.g
 { const d = new URLSearchParams(location.search).get("data"); if (d && /^[\w.\/-]{1,80}$/.test(d)) { cfg.branch = d; cfg.dataFromLink = true; } }
 function sessionToken() { try { return sessionStorage.getItem("roadmap:token"); } catch { return null; } }
 const ui = Object.assign({ tab: "checklist", q: "", area: "", owner: "", status: "", hideDone: false, rm: false }, store.get("ui", {}));
+// the page and every branch preview share one browser storage (devkat888732.github.io): a newer version may have saved a
+// tab this one doesn't have («calendar») — then this one opens the checklist instead of failing (Kaa, 2026-11-26)
+if (!TABS.some(t => t.key === ui.tab)) ui.tab = "checklist";
 if (TABS.some(t => t.key === location.hash.slice(1))) ui.tab = location.hash.slice(1);
 /* ?tab=calendar opens a tab (the bot's «📅 Открыть календарь»); in Telegram (?tg=1) the page fits the app:
  * Telegram's light / dark when no theme was chosen here, full height, no address-bar tab hash (Telegram keeps its own) */
